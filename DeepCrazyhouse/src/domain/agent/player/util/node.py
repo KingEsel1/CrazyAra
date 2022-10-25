@@ -32,6 +32,7 @@ class Node:  # Too many instance attributes (14/7)
         self.lock = Lock()  # lock object for this node to protect its member variables
         self.board = board  # python-chess board object representing the current position
         self.initial_value = value  # store the initial value prediction of the current board position
+        self.novelty_score = 0
 
         if is_leaf:
             self.nb_direct_child_nodes = 0
