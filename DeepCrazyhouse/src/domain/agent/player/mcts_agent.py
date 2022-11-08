@@ -24,6 +24,7 @@ from copy import deepcopy
 from multiprocessing import Pipe
 from time import time
 import numpy as np
+import chess
 
 from DeepCrazyhouse.src.domain.agent.neural_net_api import NeuralNetAPI
 from DeepCrazyhouse.src.domain.abstract_cls.abs_agent import AbsAgent
@@ -32,7 +33,7 @@ from DeepCrazyhouse.src.domain.agent.player.util.node import Node
 from DeepCrazyhouse.src.domain.variants.constants import BOARD_HEIGHT, BOARD_WIDTH, NB_CHANNELS_TOTAL, NB_LABELS
 from DeepCrazyhouse.src.domain.variants.game_state import GameState
 from DeepCrazyhouse.src.domain.variants.output_representation import get_probs_of_move_list, value_to_centipawn
-from DeepCrazyhouse.src.domain.util import get_check_move_mask
+from DeepCrazyhouse.src.domain.util import get_check_move_mask, get_row_col
 
 DTYPE = np.float
 
@@ -86,6 +87,8 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
         use_transposition_table=True,
         opening_guard_moves=0,
         u_init_divisor=1,
+        novelty_decay=0,
+        novelty_value=0
     ):  # Too many arguments (21/5) - Too many local variables (29/15)
         """
         Constructor of the MCTSAgent.
@@ -145,6 +148,9 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
         :param u_init_divisor: Division factor for calculating the u-value in select_node(). Default value is 1.0 to
                                 avoid division by 0. Values smaller 1.0 increases the chance of exploring each node at
                                 least once. This value must be greater 0.
+        :param novelty_decay: Float indicating how the wight of the novelty score decays over time.
+                                Expected to be in range [0.,?]
+        :param novelty_value: Float indicating the novelty score of a node if it is classified as novel
         """
 
         super().__init__(temperature, temperature_moves, verbose)
@@ -231,6 +237,9 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
         if u_init_divisor <= 0 or u_init_divisor > 1:
             raise Exception("The value for the u-value initial divisor must be in (0,1]")
         self.u_init_divisor = u_init_divisor
+        self.fact_planes = np.full((12, 8, 8), -1)  # THIS IS NOT CORRECT YET!
+        self.novelty_decay = novelty_decay
+        self.novelty_value = novelty_value
 
     def evaluate_board_state(self, state: GameState):  # Probably is better to be refactored
         """
@@ -635,8 +644,9 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
 
                 node = self.node_lookup[key]  # get the node from the look-up list
 
-                # get the prior value from the leaf node which has already been expanded
+                # get the prior value and novelty_score from the leaf node which has already been expanded
                 value = node.initial_value
+                novelty_score = parent_node.child_novelty_score[child_idx]
 
                 # clip the visit nodes for all nodes in the search tree except the director opp. move
                 clip_low_visit = self.use_pruning
@@ -670,6 +680,8 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
                     result_channel = my_pipe.recv()
                     value = np.array(self.batch_value_results[result_channel])
                     policy_vec = np.array(self.batch_policy_results[result_channel])
+
+                novelty_score = self._get_novelty_score_of_node(node, value)
 
                 is_leaf = is_won = False  # initialize is_leaf by default to false and check if the game is won
                 # check if the current player has won the game
@@ -755,13 +767,14 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
                     parent_node.child_nodes[child_idx] = new_node  # add the new node to its parent
         elif node.is_leaf:  # check if we have reached a leaf node
             value = node.initial_value
+            novelty_score = -1
         else:
             # get the value from the leaf node (the current function is called recursively)
-            value, depth, chosen_nodes = self._run_single_playout(node, pipe_id, depth + 1, chosen_nodes)
+            value, depth, chosen_nodes, novelty_score = self._run_single_playout(node, pipe_id, depth + 1, chosen_nodes)
         # revert the virtual loss and apply the predicted value by the network to the node
-        parent_node.revert_virtual_loss_and_update(child_idx, self.virtual_loss, -value)
+        parent_node.revert_virtual_loss_and_update(child_idx, self.virtual_loss, -value, novelty_score)
         # invert the value prediction for the parent of the above node layer because the player's changes every turn
-        return -value, depth, chosen_nodes
+        return -value, depth, chosen_nodes, novelty_score
 
     def check_for_duplicate(self, transposition_key, chosen_nodes):
         """
@@ -823,6 +836,13 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
             # pb_c_init = self.cpuct
             cpuct = math.log((parent_node.n_sum + 19652 + 1) / 19652) + self.cpuct
 
+            # calculate weighting coefficients for novelty score for each child node
+            # can I do this more efficiently?
+            novelty_weight = np.sqrt(self.novelty_decay / (3 * parent_node.child_number_visits + self.novelty_decay))
+            #novelty_weight = np.zeros(len(parent_node.child_number_visits))
+            # for idx, child_visits in enumerate(parent_node.child_number_visits):
+            #    novelty_weight[idx] = math.sqrt(self.novelty_decay / (3 * child_visits + self.novelty_decay))
+
             # pb_u_base = 19652 / 10
             # pb_u_init = 1
             # pb_u_low = self.u_init_divisor
@@ -843,7 +863,10 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
             #     child_idx = prob.argmax()
             #     # child_idx = np.random.randint(parent_node.nb_direct_child_nodes)
             # else:
-            child_idx = (parent_node.q_value + u_value).argmax()
+            # PUCT-Formula with weighted novelty score included
+            child_idx = (novelty_weight * parent_node.child_novelty_score
+                         + (1 - novelty_weight) * parent_node.q_value
+                         + u_value).argmax()
 
         return parent_node.child_nodes[child_idx], parent_node.legal_moves[child_idx], child_idx
 
@@ -857,6 +880,45 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
         child_idx = parent_node.get_mcts_policy(self.q_value_weight).argmax()
         nb_visits = parent_node.child_number_visits[child_idx]
         return parent_node.child_nodes[child_idx], parent_node.legal_moves[child_idx], nb_visits, child_idx
+
+    def _get_novelty_score_of_node(self, node, value):
+        player_1 = True  # WHITE -> replace with constants?
+        player_2 = False  # BLACK
+        is_novel = False  # indication if the given state is novel
+
+        # Iterate over both color starting with WHITE
+        for idx, color in enumerate([player_1, player_2]):
+            # the PIECE_TYPE is an integer list in python-chess
+            for piece_type in chess.PIECE_TYPES:
+                # define the channel by the piece_type (the input representation uses the same order as python-chess)
+                # we add an offset for the black pieces
+                # note that we subtract 1 because in python-chess the PAWN has index 1 and not 0
+                channel = (piece_type - 1) + idx * len(chess.PIECE_TYPES)
+                # iterate over all squares of the board
+                for pos in node.board.pieces(piece_type, color):
+                    row, col = get_row_col(pos)
+                    # check if the basic fact scored a new maximum
+                    if value > self.fact_planes[channel, row, col]:
+                        # set the new novelty score for the basic fact
+                        self.fact_planes[channel, row, col] = value
+                    # if the value of the current state is greater than any of the basic fact scores it contains, then
+                    # the state is considered novel
+                    if value > self.fact_planes[channel, row, col]:
+                        is_novel = True
+
+
+        # Fill in the Pocket Pieces
+        # iterate over all piece types except the king
+        # for p_type in chess.PIECE_TYPES[:-1]:
+        # p_type -1 because p_type starts with 1
+        #     channel = 768 + p_type - 1  # replace 768 with a constant
+
+        #     if p_type == chess.PAWN:
+        #         planes_pos[channel, 1, :] = 1
+
+        if is_novel:
+            return self.novelty_value
+        return 0
 
     def show_next_pred_line(self):
         """ It returns the predicted best moves for both players"""

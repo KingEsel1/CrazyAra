@@ -11,7 +11,6 @@ from threading import Lock
 import chess
 import numpy as np
 
-
 QSIZE = 100
 
 
@@ -19,20 +18,20 @@ class Node:  # Too many instance attributes (14/7)
     """Helper class for nodes stats in the search tree."""
 
     def __init__(
-        self,
-        board,
-        value,
-        p_vec_small: np.ndarray,
-        legal_moves: [chess.Move],
-        is_leaf=False,
-        transposition_key=None,
-        clip_low_visit=True,
+            self,
+            board,
+            value,
+            p_vec_small: np.ndarray,
+            legal_moves: [chess.Move],
+            is_leaf=False,
+            transposition_key=None,
+            clip_low_visit=True,
     ):  # Too many arguments (8/5)
 
         self.lock = Lock()  # lock object for this node to protect its member variables
         self.board = board  # python-chess board object representing the current position
         self.initial_value = value  # store the initial value prediction of the current board position
-        self.novelty_score = 0
+        # self.novelty_score = 0  # store the novelty score of the current board position -> not necessary
 
         if is_leaf:
             self.nb_direct_child_nodes = 0
@@ -40,6 +39,8 @@ class Node:  # Too many instance attributes (14/7)
             # specify the number of direct child nodes from this node
             self.nb_direct_child_nodes = len(p_vec_small)  # np.array(len(p_vec_small))
 
+        self.child_novelty_score = np.ones(self.nb_direct_child_nodes) * -1
+        # store the novelty score of each direct child node
         self.policy_prob = p_vec_small  # prior probability selecting each child, which is estimated by the NN
         self.legal_moves = legal_moves  # possible legal moves from this node on which represents the edges
         # stores the number of all direct children and all grand children which have already been expanded
@@ -111,7 +112,7 @@ class Node:  # Too many instance attributes (14/7)
             # we add +1 to the q values to avoid negative values, then the q values are normalized to [0,1] before
             # the q_value_weight is applied.
             policy = (self.child_number_visits / self.n_sum) * (1 - q_value_weight) + (
-                (self.q_value + 1) * 0.5
+                    (self.q_value + 1) * 0.5
             ) * q_value_weight
             return policy
 
@@ -155,12 +156,13 @@ class Node:  # Too many instance attributes (14/7)
             self.action_value[child_idx] -= virtual_loss
             self.q_value[child_idx] = self.action_value[child_idx] / self.child_number_visits[child_idx]
 
-    def revert_virtual_loss_and_update(self, child_idx, virtual_loss, value):
+    def revert_virtual_loss_and_update(self, child_idx, virtual_loss, value, novelty_score):
         """
         Revert the virtual loss effect and apply the backpropagated value of its child node
         :param child_idx:  Where the child node starts
         :param virtual_loss: Specify the virtual loss value
         :param value:  Specify the backpropagated value
+        :param novelty_score:  Specify the backpropagated novelty_score
         :return:
         """
         with self.lock:
@@ -168,6 +170,9 @@ class Node:  # Too many instance attributes (14/7)
             self.child_number_visits[child_idx] -= virtual_loss - 1
             self.action_value[child_idx] += virtual_loss + value
             self.q_value[child_idx] = self.action_value[child_idx] / self.child_number_visits[child_idx]
+            self.child_novelty_score[child_idx] += (
+                    (novelty_score - self.child_novelty_score[child_idx]) / self.child_number_visits[child_idx]
+            )
 
     def set_check_mate_node_idx(self, child_idx):
         """
