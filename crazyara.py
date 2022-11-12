@@ -549,6 +549,8 @@ jgs.-` __.'|  Developers: Johannes Czech, Moritz Willig, Alena Beyer
                         "use_transposition_table",
                         "model_architecture_dir",
                         "model_weights_dir",
+                        "novelty_decay",
+                        "novelty_value",
                     ]:
                         value = self.cmd_list[4]
                     else:
