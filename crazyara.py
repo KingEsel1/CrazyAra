@@ -88,7 +88,9 @@ class CrazyAra:  # Too many instance attributes (25/7)
             "use_transposition_table": True,
             "verbose": False,
             "model_architecture_dir": "default",
-            "model_weights_dir": "default"
+            "model_weights_dir": "default",
+            "novelty_decay": 0,
+            "novelty_value": 0
         }
         self.cmd_list = []
         try:
@@ -198,6 +200,8 @@ jgs.-` __.'|  Developers: Johannes Czech, Moritz Willig, Alena Beyer
                 use_transposition_table=self.settings["use_transposition_table"],
                 opening_guard_moves=self.settings["opening_guard_moves"],
                 u_init_divisor=self.settings["centi_u_init_divisor"] / 100,
+                novelty_decay=self.settings["novelty_decay"],
+                novelty_value=self.settings["novelty_value"],
             )
 
             self.ab_agent = AlphaBetaAgent(
