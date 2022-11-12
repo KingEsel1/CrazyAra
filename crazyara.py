@@ -725,6 +725,14 @@ jgs.-` __.'|  Developers: Johannes Czech, Moritz Willig, Alena Beyer
             "option name model_weights_dir type string default %s"
             % self.settings["model_weights_dir"]
         )
+        self.log_print(
+            "option name novelty_decay type spin default %d min 0 max 100"
+            % self.settings["novelty_decay"]
+        )
+        self.log_print(
+            "option name novelty_value type spin default %d min 0 max 100"
+            % self.settings["novelty_decay"]
+        )
         self.log_print("uciok")  # verify that all options have been sent
 
     def main(self):
