@@ -92,7 +92,9 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
     Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
     if (transposition) {
         const float qValue =  parentNode->get_child_node(childIdx)->get_value();
+        //MR const float noveltyScore = parentNode->get_child_node(childIdx)->get_novelty_score();
         transpositionValues->add_element(qValue);
+        //MR muss ich novelty in die Transposition aufnehmen?
         nodeBackup = NODE_TRANSPOSITION;
         return newNode;
     }
@@ -242,11 +244,15 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             nextNode->lock();
             const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx);
             const double transposQValue = -currentNode->get_q_sum(childIdx, searchSettings->virtualLoss) / transposVisits;
+            //MR const double transposNoveltyScore = currentNode->get_novelty_score(childIdx); -> den Umweg über sum, virtual loss und so kann ich umgehen, da auf novScore kein virtual loss angewendet wird
+
             if (nextNode->is_transposition_return(transposQValue)) {
                 const float qValue = get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value());
+                //MR const float noveltyScore = get_transposition_novelty_score(transposVisits, transposNoveltyScore, nextNode->get_value());
                 nextNode->unlock();
                 description.type = NODE_TRANSPOSITION;
                 transpositionValues->add_element(qValue);
+                //MR transpositionNoveltyScores->add_element(qValue);
                 currentNode->unlock();
                 return nextNode;
             }
@@ -306,7 +312,7 @@ void SearchThread::backup_value_outputs()
 {
     backup_values(*newNodes, newTrajectories);
     newNodeSideToMove->reset_idx();
-    backup_values(transpositionValues.get(), transpositionTrajectories);
+    backup_values(transpositionValues.get(), transpositionTrajectories); //MR add noveltyScore to params
 }
 
 void SearchThread::backup_collisions() {
@@ -356,7 +362,7 @@ void SearchThread::create_mini_batch()
 
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
-            backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver);
+            backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver); //MR add noveltyScore to params
         }
         else if (description.type == NODE_COLLISION) {
             // store a pointer to the collision node in order to revert the virtual loss of the forward propagation
@@ -400,19 +406,19 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
         Node* node = nodes.get_element(idx);
 #ifdef MCTS_TB_SUPPORT
         const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
-        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal);
+        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal); //MR add node->get_novelty_score() to params
 #else
-        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false);
+        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false); //MR add node->get_novelty_score() to params
 #endif
     }
     nodes.reset_idx();
     trajectories.clear();
 }
 
-void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories) {
+void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories) { //MR add noveltyScore to params
     for (size_t idx = 0; idx < values->size(); ++idx) {
         const float value = values->get_element(idx);
-        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false);
+        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false); //MR add noveltyScore to params
     }
     values->reset_idx();
     trajectories.clear();

@@ -43,7 +43,7 @@ class AbsAgent(ABC):
         pv - Calculated best line for both players
         """
         # the first step is to call you policy agent to evaluate the given position
-        value, legal_moves, policy, centipawn, depth, nodes, time_elapsed_s, nps, pv = self.evaluate_board_state(state)
+        value, legal_moves, policy, centipawn, depth, nodes, time_elapsed_s, nps, pv, novelty_score = self.evaluate_board_state(state)
 
         if len(legal_moves) != len(policy):
             raise Exception("Legal move list %s is incompatible to policy vector %s" % (legal_moves, policy))
@@ -77,7 +77,7 @@ class AbsAgent(ABC):
                     selected_move = legal_moves[idx]
                     confidence = policy[idx]
 
-        return value, selected_move, confidence, idx, centipawn, depth, nodes, time_elapsed_s, nps, pv
+        return value, selected_move, confidence, idx, centipawn, depth, nodes, time_elapsed_s, nps, pv, novelty_score
 
     def _apply_temperature_to_policy(self, p_vec_small):
         """

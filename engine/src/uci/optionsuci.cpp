@@ -181,7 +181,7 @@ void OptionsUCI::init(OptionsMap &o)
 #endif
     o["Threads"]                       << Option(2, 1, 512);
 #ifdef OPENVINO
-    o["Threads_NN_Inference"]          << Option(8, 1, 512);
+    o["Threads_NN_Inference"]          << Option(1, 1, 512); //MR (8, 1, 512)
 #endif
     o["Timeout_MS"]                    << Option(0, 0, 99999999);
 #ifdef MODE_LICHESS

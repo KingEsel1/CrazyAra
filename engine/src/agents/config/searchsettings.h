@@ -55,6 +55,8 @@ struct SearchSettings
     float uMin;
     float uBase;
     float randomMoveFactor;
+    //MR float noveltyDecay;
+    //MR float noveltyValue;
 
     // If true, the exact given node count doesn't need to reached, but search can be stopped earlier
     bool allowEarlyStopping;

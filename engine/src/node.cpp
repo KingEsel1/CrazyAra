@@ -543,6 +543,13 @@ float Node::get_value() const
     return valueSum / realVisitsSum;
 }
 
+/*
+float Node::get_novelty_score() const
+{
+    return noveltyScore;
+}
+*/
+
 float Node::get_value_display() const
 {
     if (is_win_node_type(d->nodeType)) {
@@ -1073,11 +1080,23 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         return d->checkmateIdx;
     }
 
+    // calculate the current noveltyWeights
+    // it's not worth to save the noveltyWeights as a node attribute because they are updated every time n_sum changes
+    //MR
+    /*
+    float addIfZero = 0.0f;
+    if (seachSettings->noveltyDecay == 0) {
+        addIfZero = 1.0f;
+    }
+    DynamicVector<float> noveltyWeight = sqrt(seachSettings->noveltyDecay / (3 * d->childNumberVisits + seachSettings->noveltyDecay + addIfZero));
+    */
+    
     assert(sum(d->childNumberVisits) == d->visitSum);
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
-    return argmax(d->qValues + get_current_u_values(searchSettings));
+    //MR return argmax(d->noveltyWeights * d->childNoveltyScore + (1 - d->noveltyWeights) * d->qValues + get_current_u_values(searchSettings));
+    return argmax(d->qValues + get_current_u_values(searchSettings)); //MR add Novelty stuff
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)

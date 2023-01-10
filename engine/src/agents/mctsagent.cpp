@@ -334,12 +334,14 @@ void MCTSAgent::run_mcts_search()
         threads[i] = new thread(run_search_thread, searchThreads[i]);
     }
     int curMovetime = timeManager->get_time_for_move(searchLimits, rootState->side_to_move(), rootNode->plies_from_null()/2);
-    ThreadManagerData tData(rootNode.get(), searchThreads, evalInfo, lastValueEval);
+    ThreadManagerData tData(rootNode.get(), searchThreads, evalInfo, lastValueEval); //MR anything to add?
     ThreadManagerInfo tInfo(searchSettings, searchLimits, overallNPS, rootState->side_to_move());
     ThreadManagerParams tParams(curMovetime, 250, is_game_sceneario(searchLimits), can_prolong_search(rootNode->plies_from_null()/2, timeManager->get_thresh_move()));
     threadManager = make_unique<ThreadManager>(&tData, &tInfo, &tParams);
     unique_ptr<thread> tManager = make_unique<thread>(run_thread_manager, threadManager.get());
+    info_string("Markus: Line before runnerMutex.unlock() in MCTSAgent::run_mcts_search()");
     runnerMutex.unlock();
+    info_string("Markus: Line after runnerMutex.unlock() in MCTSAgent::run_mcts_search()");
     for (size_t i = 0; i < searchSettings->threads; ++i) {
         threads[i]->join();
     }

@@ -2,17 +2,14 @@
   CrazyAra, a deep learning chess variant engine
   Copyright (C) 2018       Johannes Czech, Moritz Willig, Alena Beyer
   Copyright (C) 2019-2020  Johannes Czech
-
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
@@ -35,25 +32,28 @@
 #include "neuralnetapi.h"
 
 #include <ie_core.hpp>
-#include "openvino/openvino.hpp"
 
 
-/**
- * @brief The OpenVinoAPI class provides a compatible interface to use CrazyAra networks in the ONNX format using the OpenVino API.
- */
+ /**
+  * @brief The OpenVinoAPI class provides a compatible interface to use CrazyAra networks in the ONNX format using the OpenVino API.
+  */
 class OpenVinoAPI : public NeuralNetAPI
 {
 private:
-    ov::Core core;
-    std::shared_ptr<ov::Model> model;
-    ov::CompiledModel compiledModel;
-    ov::InferRequest inferRequest;
-
-    ov::Tensor inputTensor;
+    InferenceEngine::Core core;
+    InferenceEngine::CNNNetwork network;
+    InferenceEngine::ExecutableNetwork executableNetwork;
+    InferenceEngine::InputsDataMap inputInfo;
+    InferenceEngine::OutputsDataMap outputInfo;
+    InferenceEngine::InferRequest inferRequest;
+    InferenceEngine::Blob::Ptr inputBlob;
     float* rawInputData;
+
+    InferenceEngine::Blob::Ptr outputBlobValue;
+    InferenceEngine::Blob::Ptr outputBlobPolicy;
     size_t threadsNNInference;
 public:
-    OpenVinoAPI(int deviceID, unsigned int batchSize, const string &modelDirectory, size_t threadsNNInference);
+    OpenVinoAPI(int deviceID, unsigned int batchSize, const string& modelDirectory, size_t threadsNNInference);
 
     // NeuralNetAPI interface
 private:
@@ -65,7 +65,7 @@ private:
     // helper methods
     void set_nn_value_policy_shape();
 public:
-    void predict(float *inputPlanes, float *valueOutput, float *probOutputs, float *auxiliaryOutputs) override;
+    void predict(float* inputPlanes, float* valueOutput, float* probOutputs, float* auxiliaryOutputs) override;
 };
 
 /**

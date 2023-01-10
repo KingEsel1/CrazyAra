@@ -87,8 +87,8 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
         use_transposition_table=True,
         opening_guard_moves=0,
         u_init_divisor=1,
-        novelty_decay=0,
-        novelty_value=0
+        novelty_decay=0.0,
+        novelty_value=0.0,
     ):  # Too many arguments (21/5) - Too many local variables (29/15)
         """
         Constructor of the MCTSAgent.
@@ -237,7 +237,7 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
         if u_init_divisor <= 0 or u_init_divisor > 1:
             raise Exception("The value for the u-value initial divisor must be in (0,1]")
         self.u_init_divisor = u_init_divisor
-        self.fact_planes = np.full((12, 8, 8), -1)  # THIS IS NOT CORRECT YET!
+        self.fact_planes = np.full((22, 8, 8), -1)  # THIS IS NOT CORRECT YET!
         self.novelty_decay = novelty_decay
         self.novelty_value = novelty_value
 
@@ -331,6 +331,7 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
         self.node_lookup[key] = self.root_node  # store the current root in the lookup table
         best_child_idx = p_vec_small.argmax()  # select the q-value according to the mcts best child value
         value = self.root_node.q_value[best_child_idx]
+        novelty_score = self.root_node.child_novelty_score[best_child_idx]
         # value = orig_q[best_child_idx]
         lst_best_moves, _ = self.get_calculated_line()
         str_moves = self._mv_list_to_str(lst_best_moves)
@@ -359,16 +360,17 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
 
         pv = str_moves
         if self.verbose:
-            score = "score cp %d depth %d nodes %d time %d nps %d pv %s" % (
+            score = "score cp %d depth %d nodes %d time %d nps %d pv %s nov %d" % (
                 centipawns,
                 depth,
                 nodes,
                 time_elapsed_s,
                 nps,
                 pv,
+                novelty_score,
             )
             logging.info("info string %s", score)
-        return value, legal_moves, p_vec_small, centipawns, depth, nodes, time_elapsed_s, nps, pv
+        return value, legal_moves, p_vec_small, centipawns, depth, nodes, time_elapsed_s, nps, pv, novelty_score
 
     @staticmethod
     def _enhance_checks(chess_board, legal_moves, policy_prob):
@@ -531,7 +533,7 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
             time_show_info = time() - old_time
 
             for i, future in enumerate(futures):
-                cur_value, cur_depth, chosen_nodes = future.result()
+                cur_value, cur_depth, chosen_nodes, novelty_score = future.result()
 
                 if cur_depth > max_depth_reached:
                     max_depth_reached = cur_depth
@@ -540,8 +542,8 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
                     mv_list = self._create_mv_list(chosen_nodes)
                     str_moves = self._mv_list_to_str(mv_list)
                     print(
-                        "info score cp %d depth %d nodes %d pv %s"
-                        % (value_to_centipawn(cur_value), cur_depth, self.root_node.n_sum, str_moves)
+                        "info score cp %d depth %d nodes %d pv %s nov %d"
+                        % (value_to_centipawn(cur_value), cur_depth, self.root_node.n_sum, str_moves, novelty_score)
                     )
                     logging.debug("Update info")
                     old_time = time()
@@ -681,7 +683,7 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
                     value = np.array(self.batch_value_results[result_channel])
                     policy_vec = np.array(self.batch_policy_results[result_channel])
 
-                novelty_score = self._get_novelty_score_of_node(node, value)
+                novelty_score = self._get_novelty_score_of_node(state, value)
 
                 is_leaf = is_won = False  # initialize is_leaf by default to false and check if the game is won
                 # check if the current player has won the game
@@ -837,11 +839,11 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
             cpuct = math.log((parent_node.n_sum + 19652 + 1) / 19652) + self.cpuct
 
             # calculate weighting coefficients for novelty score for each child node
-            # can I do this more efficiently?
-            novelty_weight = np.sqrt(self.novelty_decay / (3 * parent_node.child_number_visits + self.novelty_decay))
-            #novelty_weight = np.zeros(len(parent_node.child_number_visits))
-            # for idx, child_visits in enumerate(parent_node.child_number_visits):
-            #    novelty_weight[idx] = math.sqrt(self.novelty_decay / (3 * child_visits + self.novelty_decay))
+            # prohibit divide by 0
+            add_if_zero = 0  # this doesn't affect the weights at all
+            if self.novelty_decay == 0:
+                add_if_zero = 1
+            novelty_weight = np.sqrt(self.novelty_decay / (3 * parent_node.child_number_visits + self.novelty_decay + add_if_zero))
 
             # pb_u_base = 19652 / 10
             # pb_u_init = 1
@@ -881,41 +883,79 @@ class MCTSAgent(AbsAgent):  # Too many instance attributes (31/7)
         nb_visits = parent_node.child_number_visits[child_idx]
         return parent_node.child_nodes[child_idx], parent_node.legal_moves[child_idx], nb_visits, child_idx
 
-    def _get_novelty_score_of_node(self, node, value):
-        player_1 = True  # WHITE -> replace with constants?
-        player_2 = False  # BLACK
+    def _get_novelty_score_of_node(self, state, value):
         is_novel = False  # indication if the given state is novel
+        player_1 = True  # WHITE
+        player_2 = False  # BLACK
+
+        state_planes_flat = state.get_state_planes()[0:12].flatten()
+        # get indices of all active facts (pocket pieces not included)
+        flat_fact_indices = np.nonzero(state_planes_flat > 0)
+        #print(flat_fact_indices)
+        for idx in flat_fact_indices[0]:
+            channel = idx // 64
+            row, col = get_row_col(idx % 64)
+            #print(self.fact_planes)
+            #print("channel=" + str(channel) + ", row=" + str(row) + ", col=" + str(col))
+            if value > self.fact_planes[channel, row, col]:
+                # set the new novelty score for the basic fact
+                self.fact_planes[channel, row, col] = value
+                # if the value of the current state is greater than any of the basic fact scores it contains,
+                # then the state is considered novel
+                is_novel = True
 
         # Iterate over both color starting with WHITE
-        for idx, color in enumerate([player_1, player_2]):
-            # the PIECE_TYPE is an integer list in python-chess
-            for piece_type in chess.PIECE_TYPES:
-                # define the channel by the piece_type (the input representation uses the same order as python-chess)
-                # we add an offset for the black pieces
-                # note that we subtract 1 because in python-chess the PAWN has index 1 and not 0
-                channel = (piece_type - 1) + idx * len(chess.PIECE_TYPES)
-                # iterate over all squares of the board
-                for pos in node.board.pieces(piece_type, color):
-                    row, col = get_row_col(pos)
-                    # check if the basic fact scored a new maximum
-                    if value > self.fact_planes[channel, row, col]:
-                        # set the new novelty score for the basic fact
-                        self.fact_planes[channel, row, col] = value
-                    # if the value of the current state is greater than any of the basic fact scores it contains, then
-                    # the state is considered novel
-                    if value > self.fact_planes[channel, row, col]:
-                        is_novel = True
+        # for idx, color in enumerate([player_1, player_2]):
+        #    # the PIECE_TYPE is an integer list in python-chess
+        #    for piece_type in chess.PIECE_TYPES:
+        #        # define the channel by the piece_type (the input representation uses the same order as python-chess)
+        #        # we add an offset for the black pieces
+        #        # note that we subtract 1 because in python-chess the PAWN has index 1 and not 0
+        #        channel = (piece_type - 1) + idx * len(chess.PIECE_TYPES)
+        #        # iterate over all squares of the board
+        #        for pos in state.board.pieces(piece_type, color):
+        #            row, col = get_row_col(pos)
+        #            # check if the basic fact scored a new maximum
+        #            if value > self.fact_planes[channel, row, col]:
+        #                # set the new novelty score for the basic fact
+        #                self.fact_planes[channel, row, col] = value
+        #                # if the value of the current state is greater than any of the basic fact scores it contains,
+        #                # then the state is considered novel
+        #                is_novel = True
 
 
         # Fill in the Pocket Pieces
         # iterate over all piece types except the king
-        # for p_type in chess.PIECE_TYPES[:-1]:
-        # p_type -1 because p_type starts with 1
-        #     channel = 768 + p_type - 1  # replace 768 with a constant
+        for piece_type in chess.PIECE_TYPES[:-1]:
+            # 12 is offset for pocket pieces plane; piece type starts with 1
+            channel = 12 + piece_type - 1
+            #print("channel=" + str(channel))
+            white_piece_pocket_count = state.board.pockets[player_1].count(piece_type)
+            black_piece_pocket_count = state.board.pockets[player_2].count(piece_type)
+            #print("white_piece_pocket_count=" + str(white_piece_pocket_count) + ", black_piece_pocket_count=" + str(black_piece_pocket_count))
 
-        #     if p_type == chess.PAWN:
-        #         planes_pos[channel, 1, :] = 1
+            # iterate over all white pocket pieces
+            for white_pocket_piece in range(white_piece_pocket_count):
+                row, col = get_row_col(white_pocket_piece)
+                if value > self.fact_planes[channel, row, col]:
+                    # set the new novelty score for the basic fact
+                    self.fact_planes[channel, row, col] = value
+                    # if the value of the current state is greater than any of the basic fact scores it contains,
+                    # then the state is considered novel
+                    is_novel = True
 
+            # iterate over all black pocket pieces
+            for black_pocket_piece in range(black_piece_pocket_count):
+                row, col = get_row_col(black_pocket_piece)
+                if value > self.fact_planes[channel, row, col]:
+                    # set the new novelty score for the basic fact
+                    # black pocket piece channels have an offset of 5
+                    self.fact_planes[channel + 5, row, col] = value
+                    # if the value of the current state is greater than any of the basic fact scores it contains,
+                    # then the state is considered novel
+                    is_novel = True
+
+        print("is_novel = " + str(is_novel))
         if is_novel:
             return self.novelty_value
         return 0

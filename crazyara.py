@@ -89,8 +89,8 @@ class CrazyAra:  # Too many instance attributes (25/7)
             "verbose": False,
             "model_architecture_dir": "default",
             "model_weights_dir": "default",
-            "novelty_decay": 0,
-            "novelty_value": 0
+            "centi_novelty_decay": 0,
+            "centi_novelty_value": 0
         }
         self.cmd_list = []
         try:
@@ -200,8 +200,8 @@ jgs.-` __.'|  Developers: Johannes Czech, Moritz Willig, Alena Beyer
                 use_transposition_table=self.settings["use_transposition_table"],
                 opening_guard_moves=self.settings["opening_guard_moves"],
                 u_init_divisor=self.settings["centi_u_init_divisor"] / 100,
-                novelty_decay=self.settings["novelty_decay"],
-                novelty_value=self.settings["novelty_value"],
+                novelty_decay=self.settings["centi_novelty_decay"] / 100,
+                novelty_value=self.settings["centi_novelty_value"] / 100,
             )
 
             self.ab_agent = AlphaBetaAgent(
@@ -395,6 +395,8 @@ jgs.-` __.'|  Developers: Johannes Czech, Moritz Willig, Alena Beyer
             # reduce noise for very short move times
             self.mcts_agent.dirichlet_epsilon = 0.2
 
+        mcts_fully_played = False
+        novelty_score = -999  # Assigning default novelty_score if alpha_beta search or mcts with use_raw_network
         if self.settings["search_type"] == "alpha_beta":
             value, selected_move, _, _, centipawn, depth, nodes, time_elapsed_s, nps, pv = self.ab_agent.perform_action(
                 self.gamestate
@@ -406,19 +408,20 @@ jgs.-` __.'|  Developers: Johannes Czech, Moritz Willig, Alena Beyer
                     self.gamestate
                 )
             else:
-                value, selected_move, _, _, centipawn, depth, nodes, time_elapsed_s, nps, pv = self.mcts_agent.perform_action(
+                value, selected_move, _, _, centipawn, depth, nodes, time_elapsed_s, nps, pv, novelty_score = self.mcts_agent.perform_action(
                     self.gamestate
                 )
         else:
             raise Exception("Unknown search type %s" % self.settings["search_type"])
 
-        self.score = "score cp %d depth %d nodes %d time %d nps %d pv %s" % (
+        self.score = "score cp %d depth %d nodes %d time %d nps %d pv %s nov %d" % (
             centipawn,
             depth,
             nodes,
             time_elapsed_s,
             nps,
             pv,
+            novelty_score
         )
         if self.enable_lichess_debug_msg:
             try:
@@ -549,8 +552,6 @@ jgs.-` __.'|  Developers: Johannes Czech, Moritz Willig, Alena Beyer
                         "use_transposition_table",
                         "model_architecture_dir",
                         "model_weights_dir",
-                        "novelty_decay",
-                        "novelty_value",
                     ]:
                         value = self.cmd_list[4]
                     else:
@@ -726,12 +727,12 @@ jgs.-` __.'|  Developers: Johannes Czech, Moritz Willig, Alena Beyer
             % self.settings["model_weights_dir"]
         )
         self.log_print(
-            "option name novelty_decay type spin default %d min 0 max 100"
-            % self.settings["novelty_decay"]
+            "option name centi_novelty_decay type spin default %d min 0 max 100"
+            % self.settings["centi_novelty_decay"]
         )
         self.log_print(
-            "option name novelty_value type spin default %d min 0 max 100"
-            % self.settings["novelty_decay"]
+            "option name centi_novelty_value type spin default %d min 0 max 100"
+            % self.settings["centi_novelty_value"]
         )
         self.log_print("uciok")  # verify that all options have been sent
 

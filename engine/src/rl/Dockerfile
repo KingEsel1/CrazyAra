@@ -70,12 +70,12 @@ ENV CUDA_PATH /usr/local/cuda/
 # Additional dependencies for reinforcement learning
 # ---------------------------------------------------
 # Install boost library (dependecy of z5 library, preinstalled on normal Debian systems)
-RUN cd /root \
-    && wget https://sourceforge.net/projects/boost/files/boost/1.70.0/boost_1_70_0.tar.bz2 \
-    && tar --bzip2 -xf boost_1_70_0.tar.bz2 \
-    && cd boost_1_70_0 \
-    && ./bootstrap.sh \
-    && ./b2 install
+#RUN cd /root \
+#    && wget https://sourceforge.net/projects/boost/files/boost/1.70.0/boost_1_70_0.tar.bz2 \
+#    && tar --bzip2 -xf boost_1_70_0.tar.bz2 \
+#    && cd boost_1_70_0 \
+#    && ./bootstrap.sh \
+#    && ./b2 install
 
 # Install XTL (dependency for XTensor)
 RUN cd /root \
@@ -103,7 +103,7 @@ ENV Z5_PATH /root/z5/
 # Clone the CrazyAra repository
 # Install python dependencies for training the neural network
 RUN cd /root \
-    && git clone https://github.com/QueensGambit/CrazyAra.git --recursive \
+    && git clone https://github.com/KingEsel1/CrazyAra.git --recursive \
     && cd /root/CrazyAra/DeepCrazyhouse/src/training/ \
     && pip install -r requirements.txt
 
@@ -119,18 +119,18 @@ RUN apt-get update -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Build CrazyAra executable with reinforcement learning support
-# --------------------------------------------------------------
+# Build CrazyAra executable
+# -------------------------
 RUN cd /root/CrazyAra/engine \
     && mkdir build \
     && cd build
 RUN if [ "${FRAMEWORK}" = "pytorch" ]; then \
     cd /root/CrazyAra/engine/build \
-    && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_RL=ON -DMODE_CRAZYHOUSE=0 -DMODE_CHESS=1 -DMODE_LICHESS=0 .. \
+    && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_RL=OFF -DMODE_CRAZYHOUSE=0 -DMODE_CHESS=1 -DMODE_LICHESS=0 .. \
     && make -j8 ; \
 else \
     cd /root/CrazyAra/engine/build \
-    && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_RL=ON -DMODE_CRAZYHOUSE=0 -DMODE_CHESS=1 -DMODE_LICHESS=0 -DBACKEND_TENSORRT_7=ON .. \
+    && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_RL=OFF -DMODE_CRAZYHOUSE=0 -DMODE_CHESS=1 -DMODE_LICHESS=0 -DBACKEND_TENSORRT_7=ON .. \
     && make -j8 ; \
 fi
 
@@ -145,5 +145,24 @@ RUN apt-get update -y \
      && apt-get clean \
      && rm -rf /var/lib/apt/lists/*
 
-CMD cd /root/CrazyAra/engine/src/rl/ \
+
+ENV WORK_DIR /root/CrazyAra/engine/build
+RUN echo "WORK_DIR: " ${WORK_DIR}
+
+ENV MODEL_NAME ClassicAra-sl-model-wdlp-rise3.3-input3.0
+ENV RELEASE_VERION 0.9.5
+
+# Download neural network
+# -------------------------------------
+RUN echo "Downloading neural network ..."
+RUN mkdir ${WORK_DIR}/model \
+    && cd ${WORK_DIR}/model \
+    && mkdir ClassicAra \
+    && cd ClassicAra \
+    && mkdir chess \
+    && cd chess \
+    && wget https://github.com/QueensGambit/CrazyAra/releases/download/${RELEASE_VERION}/${MODEL_NAME}.zip \
+    && unzip ${MODEL_NAME}.zip
+
+CMD cd /root/CrazyAra/engine/build/ \
     && /bin/bash

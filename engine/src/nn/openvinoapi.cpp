@@ -2,17 +2,14 @@
   CrazyAra, a deep learning chess variant engine
   Copyright (C) 2018       Johannes Czech, Moritz Willig, Alena Beyer
   Copyright (C) 2019-2020  Johannes Czech
-
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
@@ -27,32 +24,35 @@
 #include "openvinoapi.h"
 #include "stateobj.h"
 
-
-OpenVinoAPI::OpenVinoAPI(int deviceID, unsigned int batchSize, const string &modelDirectory, size_t threadsNNInference):
-    NeuralNetAPI("cpu", deviceID, batchSize, modelDirectory, true),
+OpenVinoAPI::OpenVinoAPI(int deviceID, unsigned int batchSize, const string& modelDirectory, size_t threadsNNInference) :
+    NeuralNetAPI("gpu", deviceID, batchSize, modelDirectory, true),
     rawInputData(nullptr),
     threadsNNInference(threadsNNInference)
 {
-    modelName = get_onnx_model_name(modelDir, batchSize);
+    modelName = get_file_ending_with(modelDir, "-bsize-" + to_string(batchSize) + ".onnx");
     modelFilePath = modelDir + "/" + modelName;
     initialize();
 }
 
 void OpenVinoAPI::set_nn_value_policy_shape()
 {
-    set_shape(nnDesign.policyOutputShape, model->get_output_shape(nnDesign.policyOutputIdx));
-    set_shape(nnDesign.valueOutputShape, model->get_output_shape(nnDesign.valueOutputIdx));
+    if (outputInfo.find(nnDesign.policyOutputName) == outputInfo.end() || outputInfo.find(nnDesign.valueOutputName) == outputInfo.end()) {
+        info_string_important(nnDesign.policyOutputName, " or ", nnDesign.valueOutputName, "not found. Fallback to default indices.");
+        nnDesign.valueOutputName = outputInfo.rbegin()->first;
+        nnDesign.policyOutputName = outputInfo.begin()->first;
+    }
+    set_shape(nnDesign.policyOutputShape, outputInfo.at(nnDesign.policyOutputName).get()->getDims());
+    set_shape(nnDesign.valueOutputShape, outputInfo.at(nnDesign.valueOutputName).get()->getDims());
 }
 
 void OpenVinoAPI::init_nn_design()
 {
-    set_shape(nnDesign.inputShape, model->input().get_shape());
+    set_shape(nnDesign.inputShape, network.getInputShapes().at("data"));
     set_nn_value_policy_shape();
 
-    nnDesign.hasAuxiliaryOutputs = model->get_output_size() > 2;
-
+    nnDesign.hasAuxiliaryOutputs = outputInfo.size() > 2;
     if (nnDesign.hasAuxiliaryOutputs) {
-        set_shape(nnDesign.auxiliaryOutputShape, model->get_output_shape(nnDesign.auxiliaryOutputIdx));
+        set_shape(nnDesign.auxiliaryOutputShape, outputInfo.at(nnDesign.auxiliaryOutputName).get()->getDims());
     }
     nnDesign.isPolicyMap = uint(nnDesign.policyOutputShape.v[1]) != (StateConstants::NB_LABELS());
     nbPolicyValues = nnDesign.policyOutputShape.v[1];
@@ -62,50 +62,62 @@ void OpenVinoAPI::init_nn_design()
 void OpenVinoAPI::load_model()
 {
     // load the model architecture
-    model = core.read_model(modelFilePath);
-    // set the batch size
-    if (model->is_dynamic()) {
-        model->get_parameters()[nnDesign.inputIdx]->set_layout("NCHW");
-        ov::set_batch(model, batchSize);
+    network = core.ReadNetwork(modelFilePath);
+
+    // get information about all topology inputs
+    inputInfo = network.getInputsInfo();
+    // get information about all topology outputs
+    outputInfo = network.getOutputsInfo();
+
+    // set precision and layout for input data
+    inputInfo.at(nnDesign.inputLayerName)->setLayout(InferenceEngine::Layout::NCHW);
+    inputInfo.at(nnDesign.inputLayerName)->setPrecision(InferenceEngine::Precision::FP32);
+
+    // set precision for outputs
+    for (auto output : outputInfo) {
+        output.second->setPrecision(InferenceEngine::Precision::FP32);
     }
 }
 
 void OpenVinoAPI::load_parameters()
 {
     // load the model to the device
-    compiledModel = core.compile_model(model, "CPU", ov::inference_num_threads(threadsNNInference));
+    std::map<std::string, std::string> config = {
+        { InferenceEngine::PluginConfigParams::KEY_CPU_THREADS_NUM, std::to_string(threadsNNInference).c_str() }
+    };
+    executableNetwork = core.LoadNetwork(network, "CPU", config);
 }
 
 void OpenVinoAPI::bind_executor()
 {
     // create an infer request
-    inferRequest = compiledModel.create_infer_request();
+    inferRequest = executableNetwork.CreateInferRequest();
 
     // allocate required objects before the actual inference
-    ov::element::Type inputType = ov::element::f32;
-    ov::Shape inputShape = {batchSize, unsigned(nnDesign.inputShape.v[1]),
-                            unsigned(nnDesign.inputShape.v[2]),
-                            unsigned(nnDesign.inputShape.v[3])};
+    inputBlob = inferRequest.GetBlob(nnDesign.inputLayerName);
+    inputBlob->allocate();
+    rawInputData = inputBlob->buffer().as<InferenceEngine::PrecisionTrait<InferenceEngine::Precision::FP32>::value_type*>();
 
-    inputTensor = ov::Tensor(inputType, inputShape);
-    rawInputData = (float*)inputTensor.data();
-    inferRequest.set_input_tensor(inputTensor);
+    inferRequest.SetBlob(nnDesign.inputLayerName, inputBlob);
 }
 
-void OpenVinoAPI::predict(float *inputPlanes, float *valueOutput, float *probOutputs, float *auxiliaryOutputs)
+void OpenVinoAPI::predict(float* inputPlanes, float* valueOutput, float* probOutputs, float* auxiliaryOutputs)
 {
     // copy over the input planes into the raw data cotainer
     std::copy(inputPlanes, inputPlanes + batchSize * get_nb_input_values_total(), rawInputData);
 
     // run the request synchronously
-    inferRequest.infer();
+    inferRequest.Infer();
 
     // process outputs
-    const ov::Tensor& outputTensorValue = inferRequest.get_output_tensor(nnDesign.valueOutputIdx);
-    const ov::Tensor& outputTensorPolicy = inferRequest.get_output_tensor(nnDesign.policyOutputIdx);
+    outputBlobValue = inferRequest.GetBlob(nnDesign.valueOutputName);
+    outputBlobPolicy = inferRequest.GetBlob(nnDesign.policyOutputName);
 
-    const float* outputBufferValue = (const float*)outputTensorValue.data();
-    const float* outputBufferPolicy = (const float*)outputTensorPolicy.data();
+    auto const memLockerValue = outputBlobValue->cbuffer(); // use const memory locker
+    auto const memLockerPolicy = outputBlobPolicy->cbuffer(); // use const memory locker
+
+    const float* outputBufferValue = memLockerValue.as<const float*>();
+    const float* outputBufferPolicy = memLockerPolicy.as<const float*>();
 
     // copy the outputs to the given pointers
     std::copy(outputBufferValue, outputBufferValue + batchSize, valueOutput);
