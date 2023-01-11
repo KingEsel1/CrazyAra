@@ -1082,14 +1082,12 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
 
     // calculate the current noveltyWeights
     // it's not worth to save the noveltyWeights as a node attribute because they are updated every time n_sum changes
-    //MR
-    /*
-    float addIfZero = 0.0f;
-    if (seachSettings->noveltyDecay == 0) {
-        addIfZero = 1.0f;
+    float offset = 0.0f;
+    if (searchSettings->noveltyDecay == 0) {
+        offset = 1.0f;
     }
-    DynamicVector<float> noveltyWeight = sqrt(seachSettings->noveltyDecay / (3 * d->childNumberVisits + seachSettings->noveltyDecay + addIfZero));
-    */
+    DynamicVector<float> noveltyWeights = sqrt(searchSettings->noveltyDecay / (3 * d->childNumberVisits + searchSettings->noveltyDecay + offset));
+    
     
     assert(sum(d->childNumberVisits) == d->visitSum);
     // find the move according to the q- and u-values for each move
