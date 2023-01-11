@@ -55,9 +55,6 @@ struct SearchSettings
     float uMin;
     float uBase;
     float randomMoveFactor;
-    //MR
-    float noveltyDecay;
-    float noveltyValue;
 
     // If true, the exact given node count doesn't need to reached, but search can be stopped earlier
     bool allowEarlyStopping;
@@ -71,6 +68,10 @@ struct SearchSettings
     bool reuseTree;
     // If true, then the MCTS solver for terminals and tablebases will be active
     bool mctsSolver;
+
+    //MR
+    float noveltyDecay;
+    float noveltyValue;
     SearchSettings();
 
 };
