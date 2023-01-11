@@ -312,7 +312,7 @@ void SearchThread::backup_value_outputs()
 {
     backup_values(*newNodes, newTrajectories);
     newNodeSideToMove->reset_idx();
-    backup_values(transpositionValues.get(), 0, transpositionTrajectories); //MR add noveltyScore to params -> change zero!
+    backup_values(transpositionValues.get(), transpositionTrajectories, 0); //MR add noveltyScore to params -> change zero!
 }
 
 void SearchThread::backup_collisions() {
@@ -362,7 +362,8 @@ void SearchThread::create_mini_batch()
 
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
-            backup_value<true>(newNode->get_value(), newNode->get_novelty_score(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver); //MR add noveltyScore to params
+            //backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, newNode->get_novelty_score()); //MR add noveltyScore to params
+            backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, 0);
         }
         else if (description.type == NODE_COLLISION) {
             // store a pointer to the collision node in order to revert the virtual loss of the forward propagation
@@ -406,21 +407,23 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
         Node* node = nodes.get_element(idx);
 #ifdef MCTS_TB_SUPPORT
         const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
-        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal); //MR add node->get_novelty_score() to params
+        //backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, node->get_novelty_score()); //MR add node->get_novelty_score() to params
+        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, 0);
 #else
-        backup_value<false>(node->get_value(), node->get_novelty_score(), searchSettings->virtualLoss, trajectories[idx], false); //MR add node->get_novelty_score() to params
+        //backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, node->get_novelty_score()); //MR add node->get_novelty_score() to params
+        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, 0);
 #endif
     }
     nodes.reset_idx();
     trajectories.clear();
 }
 
-void SearchThread::backup_values(FixedVector<float>* values, FixedVector<float>* noveltyScores,  vector<Trajectory>& trajectories) { //MR add noveltyScores to params
+void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories, FixedVector<float>* noveltyScores) { //MR add noveltyScores to params
     for (size_t idx = 0; idx < values->size(); ++idx) {
         const float value = values->get_element(idx);
         //MR
         const float noveltyScore = noveltyScores->get_element(idx);
-        backup_value<true>(value, noveltyScore, searchSettings->virtualLoss, trajectories[idx], false); //MR add noveltyScore to params
+        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore); //MR add noveltyScore to params
     }
     values->reset_idx();
     trajectories.clear();
