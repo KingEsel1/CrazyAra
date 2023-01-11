@@ -99,6 +99,7 @@ void CrazyAra::uci_loop(int argc, char* argv[])
         "isready",
         "go"
     };
+    // test
 
     do {
         if (it < commands.size()) {
