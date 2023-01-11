@@ -205,14 +205,14 @@ public:
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
             //MR
-            d->noveltyScores[childIdx] = noveltyScore;
+            // d->noveltyScores[childIdx] = noveltyScore;
         }
         else {
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
             //MR
-            d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
+            // d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
             assert(!isnan(d->qValues[childIdx]));
         }
 
@@ -799,8 +799,8 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
 #ifndef MCTS_SINGLE_PLAYER
         value = -value;
 #endif
-        freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore) :
-                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore); //MR add noveltyScore to params
+        freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, solveForTerminal, 0) :
+                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal, 0); //MR add noveltyScore to params
 
         if (it->node->is_transposition()) {
             targetQValue = it->node->get_value();

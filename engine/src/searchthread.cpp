@@ -93,6 +93,7 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
     if (transposition) {
         const float qValue =  parentNode->get_child_node(childIdx)->get_value();
         //MR const float noveltyScore = parentNode->get_child_node(childIdx)->get_novelty_score();
+        const float noveltyScore = 0; // remove zero!
         transpositionValues->add_element(qValue);
         //MR muss ich novelty in die Transposition aufnehmen?
         nodeBackup = NODE_TRANSPOSITION;
@@ -422,8 +423,9 @@ void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>&
     for (size_t idx = 0; idx < values->size(); ++idx) {
         const float value = values->get_element(idx);
         //MR
-        const float noveltyScore = noveltyScores->get_element(idx);
-        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore); //MR add noveltyScore to params
+        // const float noveltyScore = noveltyScores->get_element(idx);
+        //backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore); //MR add noveltyScore to params
+        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, 0);
     }
     values->reset_idx();
     trajectories.clear();
