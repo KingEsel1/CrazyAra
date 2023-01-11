@@ -543,12 +543,12 @@ float Node::get_value() const
     return valueSum / realVisitsSum;
 }
 
-/*
+//MR
 float Node::get_novelty_score() const
 {
     return noveltyScore;
 }
-*/
+
 
 float Node::get_value_display() const
 {

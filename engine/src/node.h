@@ -98,7 +98,8 @@ private:
     double valueSum;
 
     //MR Muss bei noveltyScore auch die Summe gespeichert werden?
-    //MR double noveltyScore;
+    //MR
+    double noveltyScore;
 
     unique_ptr<NodeData> d;
 #ifdef MCTS_STORE_STATES
@@ -190,7 +191,7 @@ public:
      * @param solveForTerminal Decides if the terminal solver will be used
      */
     template<bool freeBackup>
-    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, bool solveForTerminal) //MR add float noveltyScore
+    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, float noveltyScore, bool solveForTerminal) //MR add float noveltyScore
     {
         lock();
         // decrement virtual loss counter
@@ -203,13 +204,15 @@ public:
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
-            //MR d->noveltyScores[childIdx] = noveltyScore;
+            //MR
+            d->noveltyScores[childIdx] = noveltyScore;
         }
         else {
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
-            //MR d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
+            //MR
+            d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
             assert(!isnan(d->qValues[childIdx]));
         }
 
@@ -253,7 +256,8 @@ public:
     bool is_terminal() const;
     bool has_nn_results() const;
     float get_value() const;
-    //MR float get_novelty_score() const;
+    //MR
+    float get_novelty_score() const;
 
     /**
      * @brief get_value_display Return value evaluation which can be used for logging
@@ -781,7 +785,7 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
  * @param solveForTerminal Decides if the terminal solver will be used
  */
 template <bool freeBackup>
-void backup_value(float value, float virtualLoss, const Trajectory& trajectory, bool solveForTerminal) { //MR add float noveltyScore
+void backup_value(float value, float noveltyScore, float virtualLoss, const Trajectory& trajectory, bool solveForTerminal) { //MR add float noveltyScore
     double targetQValue = 0;
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
         if (targetQValue != 0) {
@@ -795,8 +799,8 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
 #ifndef MCTS_SINGLE_PLAYER
         value = -value;
 #endif
-        freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, solveForTerminal) :
-                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal); //MR add noveltyScore to params
+        freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, noveltyScore, solveForTerminal) :
+                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, noveltyScore, solveForTerminal); //MR add noveltyScore to params
 
         if (it->node->is_transposition()) {
             targetQValue = it->node->get_value();
