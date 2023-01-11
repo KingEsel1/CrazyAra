@@ -92,7 +92,8 @@ struct NodeData
     vector<shared_ptr<Node>> childNodes;
     DynamicVector<uint8_t> virtualLossCounter;
     DynamicVector<NodeType> nodeTypes;
-    //MR DynamicVector<float> noveltyScores;
+    //MR
+    DynamicVector<float> noveltyScores;
 
     uint32_t freeVisits;
     uint32_t visitSum;

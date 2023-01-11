@@ -55,6 +55,7 @@ struct SearchSettings
     float uMin;
     float uBase;
     float randomMoveFactor;
+    //MR
     float noveltyDecay;
     float noveltyValue;
 

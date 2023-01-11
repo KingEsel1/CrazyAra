@@ -95,9 +95,9 @@ void Agent::perform_action()
         info_bestmove(StateConstants::action_to_uci(evalInfo->bestMove, state->is_chess960()));
     #endif
     isRunning = false;
-    info_string("Markus: Line before runnerMutex.unlock() in Agend::perform_action()");
+    //info_string("MR: Line before runnerMutex.unlock() in Agend::perform_action()");
     runnerMutex.unlock();
-    info_string("Markus: Line after runnerMutex.unlock() in Agend::perform_action()");
+    //info_string("MR: Line after runnerMutex.unlock() in Agend::perform_action()");
 }
 
 void run_agent_thread(Agent* agent)
