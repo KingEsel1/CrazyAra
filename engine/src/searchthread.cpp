@@ -290,7 +290,8 @@ void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutput
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
-    //MR node_assign_novelty_score(node, valueOutputs, batchIdx);
+    //MR
+    node_assign_novelty_score(node, valueOutputs, batchIdx);
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif
@@ -365,8 +366,10 @@ void SearchThread::create_mini_batch()
 
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
-            //backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, newNode->get_novelty_score()); //MR add noveltyScore to params
-            backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, 0);
+            //MR add noveltyScore to params
+            // backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, 0);
+            backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, newNode->get_novelty_score());
+            
         }
         else if (description.type == NODE_COLLISION) {
             // store a pointer to the collision node in order to revert the virtual loss of the forward propagation
@@ -474,13 +477,11 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
     node->set_value(valueOutputs[batchIdx]);
 }
 
-void node_assign_value(Node* node, const float* valueOutputs, size_t batchIdx)
+void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx)
 {
     //MR calculate novelty score here!
     node->set_novelty_score(-1.0f);
 }
-
-
 
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings)
 {
