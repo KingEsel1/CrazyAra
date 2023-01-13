@@ -204,15 +204,17 @@ public:
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
             //MR
-            //d->noveltyScores[childIdx] = noveltyScore;
+            d->noveltyScores[childIdx] = noveltyScore;
         }
         else {
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
-            //MR noveltyScore bekommt kein virtualLoss... kann einfach übernommen werden
-            //d->noveltyScores[childIdx] = noveltyScore;
             assert(!isnan(d->qValues[childIdx]));
+
+            //MR noveltyScore bekommt kein virtualLoss... kann einfach übernommen werden
+            d->noveltyScores[childIdx] = noveltyScore;
+            assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
         if (virtualLoss != 1) {
