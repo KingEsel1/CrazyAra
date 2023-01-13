@@ -190,9 +190,9 @@ public:
      * @param solveForTerminal Decides if the terminal solver will be used
      */
     template<bool freeBackup>
-    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, float noveltyScore, bool solveForTerminal) //MR add float noveltyScore
-    {
-        lock();
+    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, float noveltyScore, bool solveForTerminal)
+    {                                                                                       
+        lock();                                                                             //MR
         // decrement virtual loss counter
         update_virtual_loss_counter<false>(childIdx, virtualLoss);
 
@@ -787,8 +787,8 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
  * @param solveForTerminal Decides if the terminal solver will be used
  */
 template <bool freeBackup>
-void backup_value(float value, float virtualLoss, const Trajectory& trajectory, bool solveForTerminal, float noveltyScore) { //MR add float noveltyScore
-    double targetQValue = 0;
+void backup_value(float value, float virtualLoss, const Trajectory& trajectory, bool solveForTerminal, float noveltyScore) {
+    double targetQValue = 0;                                                                            //MR
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);

@@ -413,11 +413,11 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
         Node* node = nodes.get_element(idx);
 #ifdef MCTS_TB_SUPPORT
         const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
-        //backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, node->get_novelty_score()); //MR add node->get_novelty_score() to params
-        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, 0);
+        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, node->get_novelty_score()); //MR add node->get_novelty_score() to params
+        //backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, 0);
 #else
-        //backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, node->get_novelty_score()); //MR add node->get_novelty_score() to params
-        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, 0);
+        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, node->get_novelty_score()); //MR add node->get_novelty_score() to params
+        //backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, 0);
 #endif
     }
     nodes.reset_idx();
@@ -428,9 +428,9 @@ void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>&
     for (size_t idx = 0; idx < values->size(); ++idx) {
         const float value = values->get_element(idx);
         //MR
-        // const float noveltyScore = noveltyScores->get_element(idx);
-        //backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore); //MR add noveltyScore to params
-        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, 0);
+        const float noveltyScore = noveltyScores->get_element(idx);
+        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore); //MR add noveltyScore to params
+        //backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, 0);
     }
     values->reset_idx();
     trajectories.clear();
