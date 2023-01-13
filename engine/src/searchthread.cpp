@@ -368,8 +368,8 @@ void SearchThread::create_mini_batch()
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
             //MR add noveltyScore to params
-            // backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, 0);
-            backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, newNode->get_novelty_score());
+            backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, 0);
+            //backup_value<true>(newNode->get_value(), searchSettings->virtualLoss, trajectoryBuffer, searchSettings->mctsSolver, newNode->get_novelty_score());
             
         }
         else if (description.type == NODE_COLLISION) {
