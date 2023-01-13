@@ -198,7 +198,12 @@ public:
 
         valueSum += value;
         ++realVisitsSum;
+
         info_string("//MR: d->childNumberVisits[childIdx] = " + std::to_string(d->childNumberVisits[childIdx]));
+        info_string("//MR: virtualLoss = " + std::to_string(virtualLoss));
+        info_string("//MR: childIdx = " + std::to_string(childIdx));
+        info_string("//MR: d->noveltyScores.size() = " + std::to_string(d->noveltyScores.size()));
+        info_string("//MR: d->qValues.size() = " + std::to_string(d->qValues.size()));
 
         if (d->childNumberVisits[childIdx] == virtualLoss) {
             // set new Q-value based on return
