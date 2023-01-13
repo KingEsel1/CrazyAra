@@ -1121,7 +1121,7 @@ NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fa
         nodeSplit.only_first(d->checkmateIdx, budget);
         return nodeSplit;
     }
-    DynamicVector<float> q_u_sum = d->qValues + get_current_u_values(searchSettings);
+    DynamicVector<float> q_u_sum = d->qValues + get_current_u_values(searchSettings); //MR add novelty!?
     float firstMax;
     float secondMax;
     assert(q_u_sum.size() > 1);
