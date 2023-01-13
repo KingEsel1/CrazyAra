@@ -198,11 +198,14 @@ public:
 
         valueSum += value;
         ++realVisitsSum;
+        info_string("//MR: d->childNumberVisits[childIdx] = " + d->childNumberVisits[childIdx]);
 
         if (d->childNumberVisits[childIdx] == virtualLoss) {
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
+            info_string("//MR: d->qValues[childIdx] = " + d->qValues[childIdx]);
+            info_string("//MR: d->noveltyScores[childIdx] = " + d->noveltyScores[childIdx]);
             //MR
             d->noveltyScores[childIdx] = noveltyScore;
         }
@@ -211,6 +214,8 @@ public:
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
             assert(!isnan(d->qValues[childIdx]));
+            info_string("//MR: d->qValues[childIdx] = " + d->qValues[childIdx]);
+            info_string("//MR: d->noveltyScores[childIdx] = " + d->noveltyScores[childIdx]);
 
             //MR noveltyScore bekommt kein virtualLoss... kann einfach übernommen werden
             d->noveltyScores[childIdx] = noveltyScore;
