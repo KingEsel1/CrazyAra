@@ -316,7 +316,8 @@ void SearchThread::backup_value_outputs()
 {
     backup_values(*newNodes, newTrajectories);
     newNodeSideToMove->reset_idx();
-    backup_values(transpositionValues.get(), transpositionTrajectories, 0); //MR add noveltyScore to params -> change zero!
+    //MR add noveltyScore to params
+    backup_values(transpositionValues.get(), transpositionTrajectories, transpositionNoveltyScores.get());
 }
 
 void SearchThread::backup_collisions() {
@@ -413,24 +414,23 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
         Node* node = nodes.get_element(idx);
 #ifdef MCTS_TB_SUPPORT
         const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
-        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, node->get_novelty_score()); //MR add node->get_novelty_score() to params
-        //backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, 0);
+        //MR add node->get_novelty_score() to params
+        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, node->get_novelty_score());
 #else
-        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, node->get_novelty_score()); //MR add node->get_novelty_score() to params
-        //backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, 0);
+        //MR add node->get_novelty_score() to params
+        backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, node->get_novelty_score());
 #endif
     }
     nodes.reset_idx();
     trajectories.clear();
 }
 
-void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories, FixedVector<float>* noveltyScores) { //MR add noveltyScores to params
-    for (size_t idx = 0; idx < values->size(); ++idx) {
+void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories, FixedVector<float>* noveltyScores) {
+    for (size_t idx = 0; idx < values->size(); ++idx) {                                              //MR
         const float value = values->get_element(idx);
         //MR
         const float noveltyScore = noveltyScores->get_element(idx);
-        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore); //MR add noveltyScore to params
-        //backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, 0);
+        backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore);
     }
     values->reset_idx();
     trajectories.clear();
