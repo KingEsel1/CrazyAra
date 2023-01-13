@@ -199,18 +199,10 @@ public:
         valueSum += value;
         ++realVisitsSum;
 
-        info_string("//MR: d->childNumberVisits[childIdx] = " + std::to_string(d->childNumberVisits[childIdx]));
-        info_string("//MR: virtualLoss = " + std::to_string(virtualLoss));
-        info_string("//MR: childIdx = " + std::to_string(childIdx));
-        info_string("//MR: d->noveltyScores.size() = " + std::to_string(d->noveltyScores.size()));
-        info_string("//MR: d->qValues.size() = " + std::to_string(d->qValues.size()));
-
         if (d->childNumberVisits[childIdx] == virtualLoss) {
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
-            info_string("//MR: d->qValues[childIdx] = " + std::to_string(d->qValues[childIdx]));
-            info_string("//MR: d->noveltyScores[childIdx] = " + std::to_string(d->noveltyScores[childIdx]));
             //MR
             d->noveltyScores[childIdx] = noveltyScore;
         }
@@ -219,8 +211,6 @@ public:
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
             assert(!isnan(d->qValues[childIdx]));
-            info_string("//MR: d->qValues[childIdx] = " + std::to_string(d->qValues[childIdx]));
-            info_string("//MR: d->noveltyScores[childIdx] = " + std::to_string(d->noveltyScores[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss... kann einfach übernommen werden
             d->noveltyScores[childIdx] = noveltyScore;
@@ -806,14 +796,14 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
                 const double transposQValue = -it->node->get_q_sum(it->childIdx, virtualLoss) / transposVisits;
                 value = get_transposition_q_value(transposVisits, transposQValue, targetQValue);
                 //MR
-                //noveltyScore = it->node->get_novelty_score();
+                noveltyScore = it->node->get_novelty_score();
             }
         }
 #ifndef MCTS_SINGLE_PLAYER
         value = -value;
 #endif
-        freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, solveForTerminal, 0) :
-                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal, 0); //MR add noveltyScore to params
+        freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore) :
+                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore); //MR add noveltyScore to params
 
         if (it->node->is_transposition()) {
             targetQValue = it->node->get_value();
