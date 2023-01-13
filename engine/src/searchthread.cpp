@@ -245,15 +245,16 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             nextNode->lock();
             const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx);
             const double transposQValue = -currentNode->get_q_sum(childIdx, searchSettings->virtualLoss) / transposVisits;
-            //MR const double transposNoveltyScore = currentNode->get_novelty_score(childIdx); -> den Umweg über sum, virtual loss und so kann ich umgehen, da auf novScore kein virtual loss angewendet wird
 
             if (nextNode->is_transposition_return(transposQValue)) {
                 const float qValue = get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value());
-                //MR const float noveltyScore = get_transposition_novelty_score(transposVisits, transposNoveltyScore, nextNode->get_value());
+                //MR Der NoveltyScore muss nicht wie die qValues gechekt werden, da kein virtualLoss angewendet wird... kann einfach übernommen werden
+                const float noveltyScore = nextNode->get_novelty_score();
                 nextNode->unlock();
                 description.type = NODE_TRANSPOSITION;
                 transpositionValues->add_element(qValue);
-                //MR transpositionNoveltyScores->add_element(qValue);
+                //MR
+                transpositionNoveltyScores->add_element(noveltyScore);
                 currentNode->unlock();
                 return nextNode;
             }

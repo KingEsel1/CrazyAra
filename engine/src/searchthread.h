@@ -62,7 +62,8 @@ private:
     unique_ptr<FixedVector<Node*>> newNodes;
     unique_ptr<FixedVector<SideToMove>> newNodeSideToMove;
     unique_ptr<FixedVector<float>> transpositionValues;
-    //MR unique_ptr<FixedVector<float>> transpositionNoveltyScores;
+    //MR
+    unique_ptr<FixedVector<float>> transpositionNoveltyScores;
 
     vector<Trajectory> newTrajectories;
     vector<Trajectory> transpositionTrajectories;
