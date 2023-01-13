@@ -802,8 +802,9 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
 #ifndef MCTS_SINGLE_PLAYER
         value = -value;
 #endif
+        //MR add novelty to params
         freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore) :
-                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore); //MR add noveltyScore to params
+                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore);
 
         if (it->node->is_transposition()) {
             targetQValue = it->node->get_value();

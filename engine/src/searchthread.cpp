@@ -92,10 +92,11 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
     Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
     if (transposition) {
         const float qValue =  parentNode->get_child_node(childIdx)->get_value();
-        //MR const float noveltyScore = parentNode->get_child_node(childIdx)->get_novelty_score();
-        const float noveltyScore = 0; // remove zero!
+        //MR
+        const float noveltyScore = parentNode->get_child_node(childIdx)->get_novelty_score();
         transpositionValues->add_element(qValue);
-        //MR muss ich novelty in die Transposition aufnehmen?
+        //MR
+        transpositionNoveltyScores->add_element(noveltyScore);
         nodeBackup = NODE_TRANSPOSITION;
         return newNode;
     }
