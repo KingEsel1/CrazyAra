@@ -341,6 +341,7 @@ public:
     void enhance_moves(const SearchSettings* searchSettings);
 
     void set_value(float value);
+    void set_novelty_score(float noveltyScore);
     uint16_t main_child_idx_for_parent() const;
 
     /**

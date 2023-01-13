@@ -663,6 +663,11 @@ void Node::set_value(float value)
     this->valueSum = value * this->realVisitsSum;
 }
 
+void Node::set_novelty_score(float noveltyScore)
+{
+    this->noveltyScore = noveltyScore;
+}
+
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
 {
     if(searchSettings->useMCGS) {

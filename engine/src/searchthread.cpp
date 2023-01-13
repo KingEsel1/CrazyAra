@@ -290,6 +290,7 @@ void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutput
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
+    //MR node_assign_novelty_score(node, valueOutputs, batchIdx);
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif
@@ -304,6 +305,7 @@ void SearchThread::set_nn_results_to_child_nodes()
             fill_nn_results(batchIdx, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, node,
                             tbHits, rootState->mirror_policy(newNodeSideToMove->get_element(batchIdx)),
                             searchSettings, rootNode->is_tablebase());
+            //MR set_novelty_score() methode here?
         }
         ++batchIdx;
     }
@@ -387,6 +389,7 @@ void SearchThread::thread_iteration()
     if (newNodes->size() != 0) {
         net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
         set_nn_results_to_child_nodes();
+        //MR set_novelty_score() methode here?
     }
 #endif
     backup_value_outputs();
@@ -470,6 +473,14 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
 #endif
     node->set_value(valueOutputs[batchIdx]);
 }
+
+void node_assign_value(Node* node, const float* valueOutputs, size_t batchIdx)
+{
+    //MR calculate novelty score here!
+    node->set_novelty_score(-1.0f);
+}
+
+
 
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings)
 {
