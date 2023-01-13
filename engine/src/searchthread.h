@@ -180,7 +180,8 @@ private:
     Node* get_new_child_to_evaluate(NodeDescription& description);
 
     void backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories);
-    void backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories, FixedVector<float>* noveltyScores); //MR add noveltyScore to params
+    //MR add noveltyScore to params
+    void backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories, FixedVector<float>* noveltyScores);
 
     /**
      * @brief select_enhanced_move Selects an enhanced move (e.g. checking move) which has not been explored under given conditions.
