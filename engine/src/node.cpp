@@ -1093,6 +1093,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         offset = 1.0f;
     }
     DynamicVector<float> noveltyWeights = sqrt(searchSettings->noveltyDecay / (3 * d->childNumberVisits + searchSettings->noveltyDecay + offset));
+    info_string("//MR noveltyWeights = " + std::to_string(noveltyWeights[0]));
     
     assert(sum(d->childNumberVisits) == d->visitSum);
     // find the move according to the q- and u-values for each move
