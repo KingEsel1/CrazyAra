@@ -192,11 +192,11 @@ private:
 };
 
 void run_search_thread(SearchThread *t);
-
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB);
+//MR add inputPlanes to params
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes);
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings);
 void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, size_t batchIdx, bool isRootNodeTB);
-void node_assign_novelty_score(Node *node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings);
+void node_assign_novelty_score(Node *node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes);
 
 /**
  * @brief random_root_playout Uses random move exploration (epsilon greedy) from the given position. The probability for doing a random move decays by depth.
