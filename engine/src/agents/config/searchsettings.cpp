@@ -49,8 +49,9 @@ SearchSettings::SearchSettings():
         epsilonGreedyCounter(20),
         reuseTree(true),
         mctsSolver(false),
-        noveltyDecay(1.0f),
-        noveltyValue(0.0f)
+    //MR
+        noveltyDecay(0.5f),
+        noveltyValue(0.5f)
 {
 
 }

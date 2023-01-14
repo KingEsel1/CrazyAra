@@ -203,7 +203,7 @@ public:
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
-            //MR
+            //MR MITTELWERT!!!
             d->noveltyScores[childIdx] = noveltyScore;
         }
         else {
@@ -213,6 +213,7 @@ public:
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss... kann einfach übernommen werden
+            //MR MITTELWERT!!!
             d->noveltyScores[childIdx] = noveltyScore;
             assert(!isnan(d->noveltyScores[childIdx]));            
         }

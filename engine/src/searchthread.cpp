@@ -287,13 +287,13 @@ void SearchThread::reset_stats()
     depthSum = 0;
 }
 
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB)
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes)
 {
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
     //MR
-    node_assign_novelty_score(node, valueOutputs, batchIdx);
+    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes);
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif
@@ -307,7 +307,7 @@ void SearchThread::set_nn_results_to_child_nodes()
         if (!node->is_terminal()) {
             fill_nn_results(batchIdx, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, node,
                             tbHits, rootState->mirror_policy(newNodeSideToMove->get_element(batchIdx)),
-                            searchSettings, rootNode->is_tablebase());
+                            searchSettings, rootNode->is_tablebase(), inputPlanes);
         }
         ++batchIdx;
     }
@@ -476,10 +476,24 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
     node->set_value(valueOutputs[batchIdx]);
 }
 
-void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx)
+void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes)
 {
     //MR calculate novelty score here!
-    node->set_novelty_score(-1.0f);
+    bool isNovel = false;
+
+    // 8 * 8 = 64 squares * 12 piecetypes
+    size_t inputPlanesSize = 8 * 8 * 12;
+    for (float i = 0; i < inputPlanesSize; i++)
+    {
+        if (valueOutputs[batchIdx] > inputPlanes[batchIdx]) {
+            isNovel = true;
+        }
+    }
+
+    if (isNovel) {
+        node->set_novelty_score(searchSettings->noveltyValue);
+    }
+
 }
 
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings)
