@@ -494,7 +494,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     if (isNovel) {
         node->set_novelty_score(searchSettings->noveltyValue);
     }
-
+    info_string("//MR isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) );
 }
 
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings)
