@@ -202,6 +202,7 @@ public:
 
         if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
             noveltyScore = 0.0f;
+            info_string("//MR noveltyScore out of range(-1;1) in revert...");
         }
 
         if (d->childNumberVisits[childIdx] == virtualLoss) {
