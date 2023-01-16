@@ -188,6 +188,7 @@ public:
      * @param childIdx Index to the child node to update
      * @param value Specifies the value evaluation to backpropagate
      * @param solveForTerminal Decides if the terminal solver will be used
+     * @param value New noveltyScore to update noveltyScores
      */
     template<bool freeBackup>
     void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, bool solveForTerminal, float noveltyScore)
@@ -216,8 +217,9 @@ public:
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
             assert(!isnan(d->qValues[childIdx]));
 
-            //MR noveltyScore bekommt kein virtualLoss... Mittelwert
-            d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
+            //MR noveltyScore bekommt kein virtualLoss -> darf ich d->childNumberVisits[childIdx] einfach so verwenden? Laut Beschreibung (oben) steht dort
+            //   n_1 = n_0 + vl drin, also auch der virtual loss...
+            d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - virtualLoss) + noveltyScore) / (d->childNumberVisits[childIdx] - virtualLoss);
             info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
