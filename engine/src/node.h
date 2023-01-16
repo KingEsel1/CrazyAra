@@ -210,12 +210,12 @@ public:
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
-            info_string("//MR qValue nach Backprop: " + to_string(d->qValues[childIdx]) + " mit value = " + to_string(value));
+            //info_string("//MR qValue nach Backprop: " + to_string(d->qValues[childIdx]) + " mit value = " + to_string(value));
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss... Mittelwert
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
-            info_string("//MR noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]) + " mit noveltyScore = " + to_string(noveltyScore));
+            //info_string("//MR noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]) + "                          mit noveltyScore = " + to_string(noveltyScore));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
@@ -790,7 +790,8 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
  */
 template <bool freeBackup>
 void backup_value(float value, float virtualLoss, const Trajectory& trajectory, bool solveForTerminal, float noveltyScore) {
-    double targetQValue = 0;                                                                            //MR
+    double targetQValue = 0;                                                                           //MR
+    info_string("//MR noveltyScore vor transpo = " + to_string(noveltyScore);
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
@@ -801,6 +802,8 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
                 noveltyScore = it->node->get_novelty_score();
             }
         }
+        info_string("//MR                                                          noveltyScore nach transpo = " + to_string(noveltyScore);
+
 #ifndef MCTS_SINGLE_PLAYER
         value = -value;
 #endif
