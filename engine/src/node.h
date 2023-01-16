@@ -190,7 +190,7 @@ public:
      * @param solveForTerminal Decides if the terminal solver will be used
      */
     template<bool freeBackup>
-    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, float noveltyScore, bool solveForTerminal)
+    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, bool solveForTerminal, float noveltyScore)
     {                                                                                       
         lock();                                                                             //MR
         info_string("//MR uebergebener noveltyScore in revert... = " + to_string(noveltyScore));
