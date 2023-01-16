@@ -219,8 +219,8 @@ public:
 
             //MR noveltyScore bekommt kein virtualLoss -> darf ich d->childNumberVisits[childIdx] einfach so verwenden? Laut Beschreibung (oben) steht dort
             //   n_1 = n_0 + vl drin, also auch der virtual loss...
-            //MR ausserdem muss doch der Divisor (d->childNumberVisits[childIdx] -1) sein -> Mittelwert...
-            d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / (d->childNumberVisits[childIdx] - 1);
+            //MR ausserdem muss doch der Nenner (d->childNumberVisits[childIdx] + 1) sein -> Mittelwert...
+            d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / (d->childNumberVisits[childIdx] + 1);
             info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
