@@ -193,6 +193,7 @@ public:
     void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, float noveltyScore, bool solveForTerminal)
     {                                                                                       
         lock();                                                                             //MR
+        info_string("//MR uebergebener noveltyScore in revert... = " + to_string(noveltyScore));
         // decrement virtual loss counter
         update_virtual_loss_counter<false>(childIdx, virtualLoss);
 
@@ -214,8 +215,9 @@ public:
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss... Mittelwert
+            info_string("//MR noveltyScore vor Backprop: " + to_string(d->noveltyScores[childIdx]));
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
-            //info_string("//MR noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]) + "                          mit noveltyScore = " + to_string(noveltyScore));
+            info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
