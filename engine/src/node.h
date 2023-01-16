@@ -193,7 +193,6 @@ public:
     void revert_virtual_loss_and_update(ChildIdx childIdx, float value, float virtualLoss, bool solveForTerminal, float noveltyScore)
     {                                                                                       
         lock();                                                                             //MR
-        info_string("//MR uebergebener noveltyScore in revert... = " + to_string(noveltyScore));
         // decrement virtual loss counter
         update_virtual_loss_counter<false>(childIdx, virtualLoss);
 
@@ -211,13 +210,11 @@ public:
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
-            //info_string("//MR qValue nach Backprop: " + to_string(d->qValues[childIdx]) + " mit value = " + to_string(value));
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss... Mittelwert
-            //info_string("//MR noveltyScore vor Backprop: " + to_string(d->noveltyScores[childIdx]));
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
-            //info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
+            info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
@@ -810,7 +807,6 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
         value = -value;
 #endif
         //MR add novelty to params
-        info_string("//MR                                                          noveltyScore vor revert... = " + to_string(noveltyScore));
         freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore) :
                    it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore);
 
