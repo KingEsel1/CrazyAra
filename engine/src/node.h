@@ -214,7 +214,7 @@ public:
 
             //MR noveltyScore bekommt kein virtualLoss... Mittelwert
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
-            info_string("//MR noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
+            info_string("//MR noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]) + " mit noveltyScore = " + to_string(noveltyScore));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
