@@ -51,7 +51,7 @@ SearchSettings::SearchSettings():
         mctsSolver(false),
     //MR
         noveltyDecay(0.5f),
-        noveltyValue(0.5f)
+        noveltyValue(1.0f)
 {
 
 }
