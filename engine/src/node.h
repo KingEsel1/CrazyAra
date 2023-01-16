@@ -199,6 +199,10 @@ public:
         valueSum += value;
         ++realVisitsSum;
 
+        if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
+            noveltyScore = 0.0f;
+        }
+
         if (d->childNumberVisits[childIdx] == virtualLoss) {
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
@@ -213,10 +217,6 @@ public:
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss... Mittelwert
-            if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
-                noveltyScore = 0.0f;
-            }
-            info_string("//MR childNumberVisits: " + to_string(d->childNumberVisits[childIdx]));
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
             info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
