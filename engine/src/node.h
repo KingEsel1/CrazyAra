@@ -216,6 +216,7 @@ public:
             if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
                 noveltyScore = 0.0f;
             }
+            info_string("//MR childNumberVisits: " + to_string(d->childNumberVisits[childIdx]));
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / d->childNumberVisits[childIdx];
             info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
