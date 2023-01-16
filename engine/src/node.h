@@ -210,6 +210,7 @@ public:
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
+            info_string("//MR qValue nach Backprop: " + to_string(d->qValues[childIdx]) + " mit value = " + to_string(value));
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss... Mittelwert
