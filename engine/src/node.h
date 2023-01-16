@@ -791,7 +791,7 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 template <bool freeBackup>
 void backup_value(float value, float virtualLoss, const Trajectory& trajectory, bool solveForTerminal, float noveltyScore) {
     double targetQValue = 0;                                                                           //MR
-    info_string("//MR noveltyScore vor transpo = " + to_string(noveltyScore);
+    info_string("//MR noveltyScore vor transpo = " + to_string(noveltyScore));
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
@@ -802,7 +802,7 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
                 noveltyScore = it->node->get_novelty_score();
             }
         }
-        info_string("//MR                                                          noveltyScore nach transpo = " + to_string(noveltyScore);
+        info_string("//MR                                                          noveltyScore nach transpo = " + to_string(noveltyScore));
 
 #ifndef MCTS_SINGLE_PLAYER
         value = -value;
