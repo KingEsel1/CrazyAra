@@ -466,12 +466,14 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
+    info_string("//MR unmittelbar VOR apply_virtual_loss_to_child ist qValues[chIdx] = " + to_string(d->qValues[childIdx]) + ", childNumbVisits = " + to_string(d->childNumberVisits[childIdx]));
     d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
     // virtual increase the number of visits
     d->childNumberVisits[childIdx] += virtualLoss;
     d->visitSum += virtualLoss;
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, virtualLoss);
+    info_string("//MR    unmittelbar NACH apply_virtual_loss_to_child ist qValues[chIdx] = " + to_string(d->qValues[childIdx]) + ", childNumbVisits = " + to_string(d->childNumberVisits[childIdx]));
 }
 
 float Node::get_q_value(ChildIdx childIdx) const
