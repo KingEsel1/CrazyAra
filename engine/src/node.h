@@ -206,7 +206,7 @@ public:
         }
 
         info_string("//MR neuer noveltyScore = " + to_string(noveltyScore));
-        info_string("//MR noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]);
+        info_string("//MR noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]));
 
         if (d->childNumberVisits[childIdx] == virtualLoss) {
             // set new Q-value based on return
