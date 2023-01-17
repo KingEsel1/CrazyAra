@@ -201,7 +201,7 @@ public:
         ++realVisitsSum;
 
         if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
-            info_string("//MR noveltyScore out of range(-1;1) in revert...: " + to_string(noveltyScore));
+            //info_string("//MR noveltyScore out of range(-1;1) in revert...: " + to_string(noveltyScore));
             noveltyScore = 0.0f;
         }
 
@@ -222,7 +222,7 @@ public:
             //   n_1 = n_0 + vl drin, also auch der virtual loss...
             //MR ausserdem muss doch der Nenner (d->childNumberVisits[childIdx] + 1) sein -> Mittelwert...
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / (d->childNumberVisits[childIdx] + 1);
-            info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
+            //info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
