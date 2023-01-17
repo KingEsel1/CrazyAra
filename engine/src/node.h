@@ -205,12 +205,16 @@ public:
             noveltyScore = 0.0f;
         }
 
+        info_string("//MR neuer noveltyScore = " + to_string(noveltyScore));
+        info_string("//MR noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]);
+
         if (d->childNumberVisits[childIdx] == virtualLoss) {
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
             //MR
             d->noveltyScores[childIdx] = noveltyScore;
+            info_string("//MR noveltyScore init: " + d->noveltyScores[childIdx])
         }
         else {
             // revert virtual loss and update the Q-value
@@ -219,10 +223,11 @@ public:
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss -> darf ich d->childNumberVisits[childIdx] einfach so verwenden? Laut Beschreibung (oben) steht dort
-            //   n_1 = n_0 + vl drin, also auch der virtual loss...
+            //   n_1 = n_0 + vl drin, also auch der virtual loss... -> deshalb d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] = realVisits
             //MR ausserdem muss doch der Nenner (d->childNumberVisits[childIdx] + 1) sein -> Mittelwert...
-            d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * d->childNumberVisits[childIdx] + noveltyScore) / (d->childNumberVisits[childIdx] + 1);
-            //info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
+            info_string("//MR realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + "      mit childVisits = " + to_string(d->childNumberVisits[childIdx] " und virtualLoss = " + to_string(d->virtualLossCounter[childIdx]));
+            d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + noveltyScore) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1);
+            info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
