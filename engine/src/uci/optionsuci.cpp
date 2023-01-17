@@ -163,7 +163,7 @@ void OptionsUCI::init(OptionsMap &o)
 #ifdef SUPPORT960
     o["UCI_Chess960"]                  << Option(false);
 #endif
-    o["Search_Type"]                   << Option("mcgs", {"mcgs", "mcts"});
+    o["Search_Type"]                   << Option("mcts", {"mcgs", "mcts"}); //MR mcts statt mcgs
 #ifdef USE_RL
     o["Simulations"]                   << Option(3200, 0, 99999999);
 #else
@@ -181,7 +181,7 @@ void OptionsUCI::init(OptionsMap &o)
 #endif
     o["Threads"]                       << Option(2, 1, 512);
 #ifdef OPENVINO
-    o["Threads_NN_Inference"]          << Option(8, 1, 512); //MR für keine Parallelisierung (1, 1, 512)
+    o["Threads_NN_Inference"]          << Option(8, 1, 512);
 #endif
     o["Timeout_MS"]                    << Option(0, 0, 99999999);
 #ifdef MODE_LICHESS
@@ -213,6 +213,9 @@ void OptionsUCI::init(OptionsMap &o)
     o["Milli_Policy_Clip_Thresh"]      << Option(0, 0, 100);
     o["Quick_Nodes"]                   << Option(100, 0, 99999);
 #endif
+    //MR
+    o["Centi_Novelty_Decay"]           << Option(0, 0, 99999);
+    o["Centi_Novelty_Value"]           << Option(0, 0, 99999);
 }
 
 void OptionsUCI::setoption(istringstream &is, int& variant, StateObj& state)

@@ -198,7 +198,7 @@ public:
         update_virtual_loss_counter<false>(childIdx, virtualLoss);
 
         valueSum += value;
-        ++realVisitsSum;
+        ++realVisitsSum; //MR eventuell realVisitSum des Kindknoten benutzen statt d->childNumberVisits[childIdx]
 
         if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
             //info_string("//MR noveltyScore out of range(-1;1) in revert...: " + to_string(noveltyScore));

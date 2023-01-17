@@ -95,9 +95,18 @@ void CrazyAra::uci_loop(int argc, char* argv[])
 
     // this is debug vector which can contain uci commands which will be automatically processed when the executable is launched
     vector<string> commands = {
-    //    "setoption name First_Device_ID value 0",
-        //"isready",
-        //"go"
+        //MR commands for cutechess-cli -> nur als Hinweis!!
+        //"setoption name First_Device_ID value 0",
+        //"setoption name Centi_Novelty_Decay value "
+        
+
+        //MR commands for console debugging
+        "setoption name Threads value 1",
+        "setoption name Batch_Size value 1",
+        "setoption name Centi_Novelty_Decay value 50",
+        "setoption name Centi_Novelty_Value value 50",
+        "isready",
+        "go nodes 10"
     };
 
     do {
@@ -725,6 +734,9 @@ void CrazyAra::init_search_settings()
     }
     searchSettings.reuseTree = Options["Reuse_Tree"];
     searchSettings.mctsSolver = Options["MCTS_Solver"];
+    //MR
+    searchSettings.noveltyDecay = Options["Centi_Novelty_Decay"] / 100.0f;
+    searchSettings.noveltyValue = Options["Centi_Novelty_Value"] / 100.0f;
 }
 
 void CrazyAra::init_play_settings()

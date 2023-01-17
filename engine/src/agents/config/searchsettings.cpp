@@ -50,8 +50,8 @@ SearchSettings::SearchSettings():
         reuseTree(true),
         mctsSolver(false),
     //MR
-        noveltyDecay(0.5f),
-        noveltyValue(1.0f)
+        noveltyDecay(0.0f),
+        noveltyValue(0.0f)
 {
 
 }
