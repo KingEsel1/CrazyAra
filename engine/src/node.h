@@ -225,7 +225,7 @@ public:
             //MR noveltyScore bekommt kein virtualLoss -> darf ich d->childNumberVisits[childIdx] einfach so verwenden? Laut Beschreibung (oben) steht dort
             //   n_1 = n_0 + vl drin, also auch der virtual loss... -> deshalb d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] = realVisits
             //MR ausserdem muss doch der Nenner (d->childNumberVisits[childIdx] + 1) sein -> Mittelwert...
-            info_string("//MR realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + "      mit childVisits = " + to_string(d->childNumberVisits[childIdx] " und virtualLoss = " + to_string(d->virtualLossCounter[childIdx]));
+            info_string("//MR realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + "      mit childVisits = " + to_string(d->childNumberVisits[childIdx]) + " und virtualLoss = " + to_string(d->virtualLossCounter[childIdx]));
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + noveltyScore) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1);
             info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
