@@ -214,7 +214,7 @@ public:
             d->qValues[childIdx] = value;
             //MR
             d->noveltyScores[childIdx] = noveltyScore;
-            info_string("//MR noveltyScore init: " + d->noveltyScores[childIdx])
+            info_string("//MR noveltyScore init: " + d->noveltyScores[childIdx]);
         }
         else {
             // revert virtual loss and update the Q-value
