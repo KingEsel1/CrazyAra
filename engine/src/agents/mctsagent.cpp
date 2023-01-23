@@ -340,9 +340,9 @@ void MCTSAgent::run_mcts_search()
     ThreadManagerParams tParams(curMovetime, 250, is_game_sceneario(searchLimits), can_prolong_search(rootNode->plies_from_null()/2, timeManager->get_thresh_move()));
     threadManager = make_unique<ThreadManager>(&tData, &tInfo, &tParams);
     unique_ptr<thread> tManager = make_unique<thread>(run_thread_manager, threadManager.get());
-    //info_string("MR: Line before runnerMutex.unlock() in MCTSAgent::run_mcts_search()");
+    //info_string("//MR: Line before runnerMutex.unlock() in MCTSAgent::run_mcts_search()");
     runnerMutex.unlock();
-    //info_string("MR: Line after runnerMutex.unlock() in MCTSAgent::run_mcts_search()");
+    //info_string("//MR: Line after runnerMutex.unlock() in MCTSAgent::run_mcts_search()");
     for (size_t i = 0; i < searchSettings->threads; ++i) {
         threads[i]->join();
     }

@@ -101,12 +101,11 @@ void CrazyAra::uci_loop(int argc, char* argv[])
         
 
         //MR commands for console debugging
-        //"setoption name Threads value 1",
-        //"setoption name Batch_Size value 1",
+        "setoption name Threads value 1",
+        "setoption name Batch_Size value 1",
         "setoption name Centi_Novelty_Decay value 50",
         "setoption name Centi_Novelty_Value value 50",
         "isready",
-        //"go"
         "go nodes 10"
     };
 
@@ -546,35 +545,35 @@ bool CrazyAra::is_ready()
         const size_t timeoutMS = Options["Timeout_MS"];
         TimeOutReadyThread timeoutThread(timeoutMS);
         thread tTimeoutThread;
-        //info_string("MR1");
+        //info_string("//MR1");
         if (timeoutMS != 0) {
             tTimeoutThread = thread(run_timeout_thread, &timeoutThread);
         }
-        //info_string("MR2");
+        //info_string("//MR2");
         init_search_settings();
-        //info_string("MR3");
+        //info_string("//MR3");
         init_play_settings();
 #ifdef USE_RL
         init_rl_settings();
 #endif
-        //info_string("MR4");
+        //info_string("//MR4");
         info_string("model dir: ", string(Options["Model_Directory"]));
         netSingle = create_new_net_single(string(Options["Model_Directory"]));
-        //info_string("MR5");
+        //info_string("//MR5");
         netSingle->validate_neural_network();
-        //info_string("MR6");
+        //info_string("//MR6");
         netBatches = create_new_net_batches(string(Options["Model_Directory"]));
-        //info_string("MR7");
+        //info_string("//MR7");
         netBatches.front()->validate_neural_network();
-        //info_string("MR8");
+        //info_string("//MR8");
         mctsAgent = create_new_mcts_agent(netSingle.get(), netBatches, &searchSettings);
-        //info_string("MR9");
+        //info_string("//MR9");
         rawAgent = make_unique<RawNetAgent>(netSingle.get(), &playSettings, false);
-        //info_string("MR10");
+        //info_string("//MR10");
         StateConstants::init(mctsAgent->is_policy_map());
-        //info_string("MR11");
+        //info_string("//MR11");
         timeoutThread.kill();
-        //info_string("MR12");
+        //info_string("//MR12");
         if (timeoutMS != 0) {
             tTimeoutThread.join();
         }
@@ -615,7 +614,7 @@ unique_ptr<NeuralNetAPI> CrazyAra::create_new_net_single(const string& modelDire
 #elif defined TENSORRT
     return make_unique<TensorrtAPI>(int(Options["First_Device_ID"]), 1, modelDirectory, Options["Precision"]);
 #elif defined OPENVINO
-    //info_string("MR4.1");
+    //info_string("//MR4.1");
     //info_string(Options["First_Device_ID"]);
     //info_string(string(Options["Threads_NN_Inference"]));
     return make_unique<OpenVinoAPI>(int(Options["First_Device_ID"]), 1, modelDirectory, Options["Threads_NN_Inference"]);
