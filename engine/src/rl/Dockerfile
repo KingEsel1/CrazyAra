@@ -180,20 +180,21 @@ RUN cd ${WORK_DIR}/model \
 RUN echo "Downloading cutechess-cli..."
 RUN cd /root \
     && wget https://github.com/QueensGambit/cutechess/releases/download/1.0.0/cutechess-cli-1.0.0.zip \
-    && unzip cutechess-cli-1.0.0.zip \
+    && unzip cutechess-cli-1.0.0.zip -d /root/cutechess-cli \
     && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/cutechess-cli/lib
+# somehow it creates /root/cutechess-cli/cutechess-cli/...files... instead of /root/cutechess-cli/...files...
 
 # Download opening books for chess # er findet aktuell /root/cutechess-cli nicht!
 # -------------------------------------
 RUN echo "Downloading opening books for chess..."
 RUN cd /root/cutechess-cli \
-    && wget https://raw.githubusercontent.com/ianfab/books/master/chess.epd \
+    && wget https://raw.githubusercontent.com/ianfab/books/master/chess.epd 
 
 # Download opening books for crazyhouse # er findet aktuell /root/cutechess-cli nicht!
 # -------------------------------------
 RUN echo "Downloading opening books for crazyhouse..."
 RUN cd /root/cutechess-cli \
-    && wget https://raw.githubusercontent.com/ianfab/books/master/crazyhouse.epd \
+    && wget https://raw.githubusercontent.com/ianfab/books/master/crazyhouse.epd 
 
 CMD cd /root/CrazyAra/engine/build/ \
     && /bin/bash
