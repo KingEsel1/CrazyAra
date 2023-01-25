@@ -208,7 +208,7 @@ public:
         //info_string("//MR neuer noveltyScore = " + to_string(noveltyScore));
         //info_string("//MR noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]));
 
-        if (d->childNumberVisits[childIdx] == virtualLoss) {
+        if (d->childNumberVisits[childIdx] == virtualLoss) { //MR BUG?: d->virtualLossCounter[childIdx]
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
@@ -219,7 +219,7 @@ public:
         else {
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
-            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx];
+            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx]; //MR: Muss hier ein +1 hin in den Nenner? -> evlt. ohne VL testen...
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss -> darf ich d->childNumberVisits[childIdx] einfach so verwenden? Laut Beschreibung (oben) steht dort

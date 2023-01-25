@@ -126,7 +126,7 @@ RUN cd /root/CrazyAra/engine \
     && cd build
 RUN if [ "${FRAMEWORK}" = "pytorch" ]; then \
     cd /root/CrazyAra/engine/build \
-    && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_RL=OFF -DMODE_CRAZYHOUSE=0 -DMODE_CHESS=1 -DMODE_LICHESS=0 .. \
+    && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBACKEND_TENSORRT=ON -DBACKEND_OPENVINO=OFF -DUSE_RL=OFF -DMODE_CRAZYHOUSE=0 -DMODE_CHESS=1 -DMODE_LICHESS=0 .. \
     && make -j8 ; \
 else \
     cd /root/CrazyAra/engine/build \
@@ -163,6 +163,37 @@ RUN mkdir ${WORK_DIR}/model \
     && cd chess \
     && wget https://github.com/QueensGambit/CrazyAra/releases/download/${RELEASE_VERION}/${MODEL_NAME}.zip \
     && unzip ${MODEL_NAME}.zip
+
+# Download network for CrazyHouse
+# -------------------------------------
+RUN echo "Downloading network for crazyhouse..."
+RUN cd ${WORK_DIR}/model \
+    && mkdir CrazyAra \
+    && cd CrazyAra \
+    && mkdir crazyhouse \
+    && cd crazyhouse \
+    && wget https://github.com/QueensGambit/CrazyAra/releases/download/0.9.5/CrazyAra-rl-model-os-96.zip \
+    && unzip CrazyAra-rl-model-os-96.zip
+
+# Download cutechess-cli
+# -------------------------------------
+RUN echo "Downloading cutechess-cli..."
+RUN cd /root \
+    && wget https://github.com/QueensGambit/cutechess/releases/download/1.0.0/cutechess-cli-1.0.0.zip \
+    && unzip cutechess-cli-1.0.0.zip \
+    && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/cutechess-cli/lib
+
+# Download opening books for chess # er findet aktuell /root/cutechess-cli nicht!
+# -------------------------------------
+RUN echo "Downloading opening books for chess..."
+RUN cd /root/cutechess-cli \
+    && wget https://raw.githubusercontent.com/ianfab/books/master/chess.epd \
+
+# Download opening books for crazyhouse # er findet aktuell /root/cutechess-cli nicht!
+# -------------------------------------
+RUN echo "Downloading opening books for crazyhouse..."
+RUN cd /root/cutechess-cli \
+    && wget https://raw.githubusercontent.com/ianfab/books/master/crazyhouse.epd \
 
 CMD cd /root/CrazyAra/engine/build/ \
     && /bin/bash
