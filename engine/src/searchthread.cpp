@@ -498,6 +498,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
 {
     //MR calculate novelty score here!
     bool isNovel = false;
+    int numberOfNovelFacts = 0;
 
     // 8 * 8 = 64 squares * 12 piecetypes
     size_t inputPlanesSize = 8 * 8 * 12;
@@ -505,17 +506,14 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     {
         if (valueOutputs[batchIdx] > inputPlanes[batchIdx]) {
             isNovel = true;
-            info_string("//MR: node_assign_novelty_score(...) mit isNovel = true!! + idx = " + to_string(i));
+            numberOfNovelFacts++; //MR raus nach debug!
         }
     }
 
     if (isNovel) {
         node->set_novelty_score(searchSettings->noveltyValue);
     }
-    info_string("//MR isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) );
-    //if (node->get_novelty_score() > 1 || node->get_novelty_score() < -1) {
-    //    info_string("//MR nov_score zu gros/klein: " + to_string(node->get_novelty_score()));
-    //}
+    info_string("//MR assign_novelty_score(): isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " and number of novel facts = " + to_string(numberOfNovelFacts));
 }
 
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings)

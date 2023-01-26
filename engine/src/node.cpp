@@ -1095,14 +1095,13 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // it's not worth to save the noveltyWeights as a node attribute because they are updated every time n_sum changes
     //MR
     DynamicVector<float> noveltyWeights(d->childNumberVisits.size());
-    info_string("//MR: noveltyDecay = " + to_string(searchSettings->noveltyDecay));
+    //info_string("//MR: noveltyDecay = " + to_string(searchSettings->noveltyDecay));
     if (searchSettings->noveltyDecay != 0.0f) {
         for (int i = 0; i < d->childNumberVisits.size(); i++) {
             info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i]));
         }
-        DynamicVector<float> noveltyWeights = sqrt(searchSettings->noveltyDecay / (3 * d->childNumberVisits + searchSettings->noveltyDecay));
+        DynamicVector<float> noveltyWeights = sqrt(double(searchSettings->noveltyDecay) / (3 * d->childNumberVisits + searchSettings->noveltyDecay));
     }
-    info_string("//MR: noveltyWeights = " + to_string(noveltyWeights.size()));
     for (int i = 0; i < noveltyWeights.size(); i++) {
         info_string("//MR: noveltyWeights" + to_string(i) + " = " + to_string(noveltyWeights[i]));
     }
