@@ -36,7 +36,7 @@ SearchSettings::SearchSettings():
         virtualLoss(1.0f),
         verbose(true),
         epsilonChecksCounter(100),
-        useMCGS(true),
+        useMCGS(false),  //MR geaendert!!
         cpuctInit(2.5f),
         cpuctBase(19652.0f),
         uInit(1.0f),

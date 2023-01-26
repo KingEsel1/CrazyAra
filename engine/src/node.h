@@ -175,7 +175,7 @@ public:
      *       = (-0.25 * 2 + 1) / (2 - 1)
      *       = 0.5
      * 4. Update Q-value by new value (e.g. val = 0.7)
-     *   Q_3 = (Q_2 * (n_1 - vl) + val) / (n_1)
+     *   Q_3 = (Q_2 * (n_1 - vl) + val) / (n_1)     //MR warum steht im Nenner n_1 und nicht (n_1 - vl + 1)???
      *       = (0.5 * (2 - 1) + 0.7) / 2
      *       = 0.6
      *
@@ -201,13 +201,14 @@ public:
         ++realVisitsSum; //MR eventuell realVisitSum des Kindknoten benutzen statt d->childNumberVisits[childIdx]
 
         if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
-            //info_string("//MR noveltyScore out of range(-1;1) in revert...: " + to_string(noveltyScore));
+            info_string("//MR noveltyScore out of range(-1;1) in revert...: " + to_string(noveltyScore));
             noveltyScore = 0.0f;
         }
 
-        //info_string("//MR neuer noveltyScore = " + to_string(noveltyScore));
-        //info_string("//MR noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]));
+        info_string("//MR neuer noveltyScore = " + to_string(noveltyScore));
+        info_string("//MR noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]));
 
+        //MR d->virtualLossCounter[childIdx] enthaelt den summierten virtualLoss eines Kindknotens insgesamt
         info_string("//MR: d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]));
         info_string("//MR: virtualLoss = " + to_string(virtualLoss) + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
         if (d->childNumberVisits[childIdx] == virtualLoss) { //MR BUG?: d->virtualLossCounter[childIdx]
@@ -216,7 +217,7 @@ public:
             d->qValues[childIdx] = value;
             //MR
             d->noveltyScores[childIdx] = noveltyScore;
-            //info_string("//MR noveltyScore init: " + to_string(d->noveltyScores[childIdx]));
+            info_string("//MR noveltyScore init: " + to_string(d->noveltyScores[childIdx]));
         }
         else {
             // revert virtual loss and update the Q-value
@@ -227,9 +228,9 @@ public:
             //MR noveltyScore bekommt kein virtualLoss -> darf ich d->childNumberVisits[childIdx] einfach so verwenden? Laut Beschreibung (oben) steht dort
             //   n_1 = n_0 + vl drin, also auch der virtual loss... -> deshalb d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] = realVisits
             //MR ausserdem muss doch der Nenner (d->childNumberVisits[childIdx] + 1) sein -> Mittelwert...
-            //info_string("//MR realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + "      mit childVisits = " + to_string(d->childNumberVisits[childIdx]) + " und virtualLoss = " + to_string(d->virtualLossCounter[childIdx]));
+            info_string("//MR realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + "      mit childVisits = " + to_string(d->childNumberVisits[childIdx]) + " und virtualLoss = " + to_string(d->virtualLossCounter[childIdx]));
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + noveltyScore) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1);
-            //info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
+            info_string("//MR                                                                  noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
@@ -506,6 +507,7 @@ public:
     {
         if (increment) {
             d->virtualLossCounter[childIdx] += virtualLoss;
+            info_string("MR: d->virtualLossCounter[childIdx] nach VL = " + to_string(d->virtualLossCounter[childIdx]));
         }
         else {
             assert(d->virtualLossCounter[childIdx] != 0);

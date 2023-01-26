@@ -97,6 +97,7 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
         transpositionValues->add_element(qValue);
         //MR
         transpositionNoveltyScores->add_element(noveltyScore);
+        info_string("//MR: transposition node! mit qValue = " + to_string(qValue) + " und noveltyScore = " + to_string(noveltyScore));
         nodeBackup = NODE_TRANSPOSITION;
         return newNode;
     }
@@ -185,7 +186,9 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
+            info_string("//MR: get_new_child_to_evaluate(NodeDescription& description) vor select_child_node(searchSettings)");
             childIdx = currentNode->select_child_node(searchSettings);
+            info_string("//MR: childIdx aus select_child_node(searchSettings)");
         }
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings->virtualLoss);
         trajectoryBuffer.emplace_back(NodeAndIdx(currentNode, childIdx));
@@ -193,6 +196,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         nextNode = currentNode->get_child_node(childIdx);
         description.depth++;
         if (nextNode == nullptr) {
+            info_string("//MR: nextNode ist null -> fuege leeren Knoten hinzu");
 #ifdef MCTS_STORE_STATES
             StateObj* newState = currentNode->get_state()->clone();
 #else
@@ -222,6 +226,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     mapWithMutex->mtx.unlock();
                 }
 #else
+                info_string("//MR: nodeType NODE_NEW_NODE in get_new_child_to_evalate");
                 // fill a new board in the input_planes vector
                 // we shift the index by nbNNInputValues each time
                 newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
@@ -233,16 +238,19 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             return nextNode;
         }
         if (nextNode->is_terminal()) {
+            info_string("//MR: nextNode ist terminal");
             description.type = NODE_TERMINAL;
             currentNode->unlock();
             return nextNode;
         }
         if (!nextNode->has_nn_results()) {
+            info_string("//MR: !nextNode->has_nn_results()");
             description.type = NODE_COLLISION;
             currentNode->unlock();
             return nextNode;
         }
         if (nextNode->is_transposition()) {
+            info_string("//MR: nextNode->is_transposition()");
             nextNode->lock();
             const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx);
             const double transposQValue = -currentNode->get_q_sum(childIdx, searchSettings->virtualLoss) / transposVisits;
@@ -290,6 +298,7 @@ void SearchThread::reset_stats()
 //MR add inputPlanes to params
 void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes)
 {
+    info_string("//MR: fill_nn_results(...)");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
@@ -363,10 +372,12 @@ void SearchThread::create_mini_batch()
 
         trajectoryBuffer.clear();
         actionsBuffer.clear();
+        info_string("//MR:create_mini_batch() vor get_new_child_to_evaluate(description)");
         Node* newNode = get_new_child_to_evaluate(description);
         depthSum += description.depth;
         depthMax = max(depthMax, description.depth);
 
+        info_string("//MR: create_mini_batch() nach get_new_child_to_evaluate() -> new Node Type = " + to_string(description.type));
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
             //MR add noveltyScore to params
@@ -392,10 +403,12 @@ void SearchThread::thread_iteration()
     create_mini_batch();
 #ifndef SEARCH_UCT
     if (newNodes->size() != 0) {
+        info_string("//MR: thread_iteration() nach create_mini_batch()");
         net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
         set_nn_results_to_child_nodes();
     }
 #endif
+    info_string("//MR: thread_iteration() vor backup_value_outputs()");
     backup_value_outputs();
     backup_collisions();
 }
@@ -405,6 +418,7 @@ void run_search_thread(SearchThread *t)
     t->set_is_running(true);
     t->reset_stats();
     while(t->is_running() && t->nodes_limits_ok() && t->is_root_node_unsolved()) {
+        info_string("//MR: run_search_thread(SearchThread *t)");
         t->thread_iteration();
     }
     t->set_is_running(false);
@@ -419,6 +433,7 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
         backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, node->get_novelty_score());
 #else
         //MR add node->get_novelty_score() to params
+        info_string("//MR: backup_values(...) mit freeBackup = false");
         backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, node->get_novelty_score());
 #endif
     }
@@ -431,6 +446,7 @@ void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>&
         const float value = values->get_element(idx);
         //MR
         const float noveltyScore = noveltyScores->get_element(idx);
+        info_string("//MR: backup_values(...) mit freeBackup = true");
         backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore);
     }
     values->reset_idx();
@@ -474,6 +490,7 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
         return;
     }
 #endif
+    info_string("//MR: node_assign_value(...) mit value: " + to_string(valueOutputs[batchIdx]));
     node->set_value(valueOutputs[batchIdx]);
 }
 
@@ -488,6 +505,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     {
         if (valueOutputs[batchIdx] > inputPlanes[batchIdx]) {
             isNovel = true;
+            info_string("//MR: node_assign_novelty_score(...) mit isNovel = true!!");
         }
     }
 

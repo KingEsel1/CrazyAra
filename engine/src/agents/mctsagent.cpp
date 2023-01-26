@@ -332,6 +332,7 @@ void MCTSAgent::run_mcts_search()
         searchThreads[i]->set_root_state(rootState.get());
         searchThreads[i]->set_search_limits(searchLimits);
         searchThreads[i]->set_reached_tablebases(reachedTablebases);
+        info_string("//MR: run_mcts_search() loop");
         threads[i] = new thread(run_search_thread, searchThreads[i]);
     }
     int curMovetime = timeManager->get_time_for_move(searchLimits, rootState->side_to_move(), rootNode->plies_from_null()/2);
@@ -349,6 +350,7 @@ void MCTSAgent::run_mcts_search()
     threadManager->kill();
     tManager->join();
     delete[] threads;
+    info_string("//MR: run_mcts_search() ende");
 }
 
 void MCTSAgent::stop()

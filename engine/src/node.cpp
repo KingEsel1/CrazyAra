@@ -466,10 +466,16 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
+    info_string("MR: d->qValues[childIdx] vor VL = " + to_string(d->qValues[childIdx]));
     d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
+    info_string("MR: d->qValues[childIdx] nach VL = " + to_string(d->qValues[childIdx]));
     // virtual increase the number of visits
+    info_string("MR: d->childNumberVisits[childIdx] vor VL = " + to_string(d->childNumberVisits[childIdx]));
     d->childNumberVisits[childIdx] += virtualLoss;
+    info_string("MR: d->childNumberVisits[childIdx] nach VL = " + to_string(d->childNumberVisits[childIdx]));
+    info_string("MR: visitSum vor VL = " + to_string(d->visitSum));
     d->visitSum += virtualLoss;
+    info_string("MR: visitSum nach VL = " + to_string(d->visitSum));
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, virtualLoss);
 }
@@ -1088,17 +1094,30 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // calculate the current noveltyWeights
     // it's not worth to save the noveltyWeights as a node attribute because they are updated every time n_sum changes
     //MR
-    float offset = 0.0f;
-    if (searchSettings->noveltyDecay == 0) {
-        offset = 1.0f;
+    DynamicVector<float> noveltyWeights(d->childNumberVisits.size());
+    if (searchSettings->noveltyDecay != 0.0f) {
+        DynamicVector<float> noveltyWeights = sqrt(searchSettings->noveltyDecay / (3 * d->childNumberVisits + searchSettings->noveltyDecay));
     }
-    DynamicVector<float> noveltyWeights = sqrt(searchSettings->noveltyDecay / (3 * d->childNumberVisits + searchSettings->noveltyDecay + offset));
+    info_string("//MR: noveltyWeights = " + to_string(noveltyWeights.size()));
+    for (int i = 0; i < noveltyWeights.size(); i++) {
+        info_string("//MR: noveltyWeights" + to_string(i) + "= " + to_string(noveltyWeights[i]));
+    }
     
     assert(sum(d->childNumberVisits) == d->visitSum);
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
     //MR
+    for (int i = 0; i < d->noveltyScores.size(); i++) {
+        info_string("//MR: d->noveltyScores" + to_string(i) + "= " + to_string(d->noveltyScores[i]));
+    }
+    for (int i = 0; i < d->qValues.size(); i++) {
+        info_string("//MR: d->qValues" + to_string(i) + "= " + to_string(d->qValues[i]));
+    }
+    DynamicVector<float> uVal = get_current_u_values(searchSettings);
+    for (int i = 0; i < uVal.size(); i++) {
+        info_string("//MR: uValues" + to_string(i) + "= " + to_string(uVal[i]));
+    }
     return argmax(noveltyWeights * d->noveltyScores + (1 - noveltyWeights) * d->qValues + get_current_u_values(searchSettings));
     //return argmax(d->qValues + get_current_u_values(searchSettings)); //MR add Novelty stuff
 }
