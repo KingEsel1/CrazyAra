@@ -102,11 +102,11 @@ void CrazyAra::uci_loop(int argc, char* argv[])
 
         //MR commands for console debugging
         //"setoption name Threads value 1",
-        //"setoption name Batch_Size value 1",
-        //"setoption name Centi_Novelty_Decay value 50",
-        //"setoption name Centi_Novelty_Value value 50",
-        //"isready",
-        //"go nodes 10"
+        "setoption name Batch_Size value 1",
+        "setoption name Centi_Novelty_Decay value 50",
+        "setoption name Centi_Novelty_Value value 50",
+        "isready",
+        "go nodes 10"
     };
 
     do {
