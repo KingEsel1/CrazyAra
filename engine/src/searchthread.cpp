@@ -188,7 +188,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         if (childIdx == uint16_t(-1)) {
             info_string("//MR: get_new_child_to_evaluate(NodeDescription& description) vor select_child_node(searchSettings)");
             childIdx = currentNode->select_child_node(searchSettings);
-            info_string("//MR: childIdx aus select_child_node(searchSettings)");
+            info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx));
         }
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings->virtualLoss);
         trajectoryBuffer.emplace_back(NodeAndIdx(currentNode, childIdx));
@@ -505,14 +505,14 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     {
         if (valueOutputs[batchIdx] > inputPlanes[batchIdx]) {
             isNovel = true;
-            info_string("//MR: node_assign_novelty_score(...) mit isNovel = true!!");
+            info_string("//MR: node_assign_novelty_score(...) mit isNovel = true!! + idx = " + to_string(i));
         }
     }
 
     if (isNovel) {
         node->set_novelty_score(searchSettings->noveltyValue);
     }
-    //info_string("//MR isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) );
+    info_string("//MR isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) );
     //if (node->get_novelty_score() > 1 || node->get_novelty_score() < -1) {
     //    info_string("//MR nov_score zu gros/klein: " + to_string(node->get_novelty_score()));
     //}
