@@ -29,7 +29,7 @@
 
 void NodeData::add_empty_node()
 {
-    info_string("MR: add_empty_node()");
+    info_string("//MR: add_empty_node()");
     append(childNumberVisits, 0U);
     append(qValues, Q_INIT);
     //MR
@@ -54,8 +54,10 @@ void NodeData::reserve_initial_space()
     childNodes.reserve(initSize);
     virtualLossCounter.reserve(initSize);
     nodeTypes.reserve(initSize);
+    info_string("//MR: reserve_initial_space()");
     add_empty_node();
     if (initSize > 1) {
+        info_string("//MR: reserve_initial_space() innerhalb if");
         add_empty_node();
         ++noVisitIdx;
     }

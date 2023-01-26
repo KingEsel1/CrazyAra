@@ -115,6 +115,7 @@ size_t MCTSAgent::init_root_node(StateObj *state)
 {
     size_t nodesPreSearch;
     gcThread.oldRootNode = rootNode;
+    info_string("//MR: erstelle neuen Wurzelknoten aus aktuellem Zustand");
     rootNode = get_root_node_from_tree(state);
 
     if (rootNode != nullptr) {

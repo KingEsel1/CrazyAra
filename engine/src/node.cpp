@@ -527,6 +527,7 @@ void Node::increment_no_visit_idx()
         if (d->noVisitIdx == PRESERVED_ITEMS) {
             reserve_full_memory();
         }
+        info_string("//MR: increment_no_visit_idx()");
         d->add_empty_node();
     }
 }
@@ -537,6 +538,7 @@ void Node::fully_expand_node()
         reserve_full_memory();
         for (size_t idx = d->noVisitIdx; idx < get_number_child_nodes(); ++idx) {
             d->add_empty_node();
+            info_string("//MR: increment_no_visit_idx()");
         }
         d->noVisitIdx = get_number_child_nodes();
         // keep this exact order
