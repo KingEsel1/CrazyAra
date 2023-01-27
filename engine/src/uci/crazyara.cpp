@@ -106,7 +106,7 @@ void CrazyAra::uci_loop(int argc, char* argv[])
         "setoption name Centi_Novelty_Decay value 50",
         "setoption name Centi_Novelty_Value value 50",
         "isready",
-        "go nodes 2"
+        "go nodes 5"
     };
 
     do {

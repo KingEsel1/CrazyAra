@@ -1097,6 +1097,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     DynamicVector<float> noveltyWeights(d->childNumberVisits.size());
     //info_string("//MR: noveltyDecay = " + to_string(searchSettings->noveltyDecay));
     if (searchSettings->noveltyDecay != 0.0f) {
+        //MR reicht der double im Nenner, um sehr hohe NoveltyWeights zu vermeiden?
         DynamicVector<float> noveltyWeights = sqrt(double(searchSettings->noveltyDecay) / (3 * d->childNumberVisits + searchSettings->noveltyDecay));
     }
     
