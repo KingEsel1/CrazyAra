@@ -195,44 +195,47 @@ public:
     {                                                                                       
         lock();                                                                             //MR
         // decrement virtual loss counter
+        info_string("//MR: revert_virtual_loss_and_update()");
         update_virtual_loss_counter<false>(childIdx, virtualLoss); //MR wäre meiner Meinung nach schlauer das erst nach der Aktualisierung des NoveltyScores zu ton um leichter an die realVisits zu kommen!
 
         valueSum += value;
-        ++realVisitsSum; //MR eventuell realVisitSum des Kindknoten benutzen statt d->childNumberVisits[childIdx]
+        ++realVisitsSum; //MR eventuell realVisitSum des Kindknoten benutzen statt d->childNumberVisits[childIdx] <- das ist dumm, da man dann eine neue Variable d->realchildNumberVisits erstellen muss... lieber berechnen
+        info_string("//MR: revVLaU(): realVisitSum des Elternknotens des zu updatenden = " + to_string(realVisitsSum));
 
         if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
-            info_string("//MR revVLaU(): noveltyScore out of range(-1;1) in revert...: " + to_string(noveltyScore));
+            info_string("//MR: revVLaU(): ------------------------------- noveltyScore out of range(-1;1) in revert...: " + to_string(noveltyScore) + " -------------------------------");
             noveltyScore = 0.0f;
         }
 
-        info_string("//MR revVLaU(): neuer noveltyScore = " + to_string(noveltyScore));
-        info_string("//MR revVLaU(): noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]));
+        info_string("//MR: revVLaU(): noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]) + "mit neuem noveltyScore = " + to_string(noveltyScore));
 
         //MR d->virtualLossCounter[childIdx] enthaelt den summierten virtualLoss eines Kindknotens insgesamt
-        info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]));
-        info_string("//MR: revVLaU(): virtualLoss = " + to_string(virtualLoss) + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
+        info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]) + " virtualLoss = " + to_string(virtualLoss)
+            " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
         if (d->childNumberVisits[childIdx] == virtualLoss) { //MR BUG?: d->virtualLossCounter[childIdx]
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
             //MR
             d->noveltyScores[childIdx] = noveltyScore;
-            info_string("//MR revVLaU(): noveltyScore init: " + to_string(d->noveltyScores[childIdx]));
+            info_string("//MR: revVLaU(): INIT: noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx])
+                + " | qValue nach Backprop : " + to_string(d->qValue[childIdx]));
         }
         else {
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
-            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value) / d->childNumberVisits[childIdx]; //MR: Muss hier ein +1 hin in den Nenner? -> evlt. ohne VL testen...
+            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value)
+                / d->childNumberVisits[childIdx]; //MR: Muss hier ein +1 hin in den Nenner? -> evlt. ohne VL testen...
             assert(!isnan(d->qValues[childIdx]));
 
             //MR noveltyScore bekommt kein virtualLoss -> darf ich d->childNumberVisits[childIdx] einfach so verwenden? Laut Beschreibung (oben) steht dort
             //   n_1 = n_0 + vl drin, also auch der virtual loss... -> deshalb d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] = realVisits -> FALSCH!! d->virtualLossCounter[chIdx] wird oben schon dekrementiert...
             //MR ausserdem muss doch der Nenner (d->childNumberVisits[childIdx] + 1) sein -> Mittelwert...
-            info_string("//MR revVLaU(): realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)) + " mit childVisits = " + to_string(d->childNumberVisits[childIdx])
-                + " und d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]) + " und virtualLoss = " + to_string(virtualLoss));
+            info_string("//MR: revVLaU(): realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)));
             //MR alt: d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + noveltyScore) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1);
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)) + noveltyScore) / (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss) + 1);
-            info_string("//MR revVLaU():                                                               noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]));
+            info_string("//MR: revVLaU(): UPDATE: qValue nach Backprop: " + to_string(d->qValue[childIdx])
+                + " | noveltyScore nach Backprop : " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
 
@@ -509,12 +512,12 @@ public:
     {
         if (increment) {
             d->virtualLossCounter[childIdx] += virtualLoss;
-            info_string("MR: update_virtual_loss_counter(): d->virtualLossCounter[childIdx] nach update = " + to_string(d->virtualLossCounter[childIdx]));
+            info_string("//MR: update_virtual_loss_counter() inkrement: d->virtualLossCounter[childIdx] nach update = " + to_string(d->virtualLossCounter[childIdx]));
         }
         else {
             assert(d->virtualLossCounter[childIdx] != 0);
             d->virtualLossCounter[childIdx] -= virtualLoss;
-            info_string("MR: update_virtual_loss_counter(): d->virtualLossCounter[childIdx] nach update = " + to_string(d->virtualLossCounter[childIdx]));
+            info_string("//MR: update_virtual_loss_counter() dekrement: d->virtualLossCounter[childIdx] nach update = " + to_string(d->virtualLossCounter[childIdx]));
         }
     }
 

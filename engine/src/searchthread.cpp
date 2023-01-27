@@ -162,6 +162,7 @@ Node* SearchThread::get_starting_node(Node* currentNode, NodeDescription& descri
 
 Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 {
+    info_string("//MR: get_new_child_to_evaluate() -> erstelle eine neue Trajektorie");
     description.depth = 0;
     Node* currentNode = rootNode;
     Node* nextNode;
@@ -186,17 +187,18 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
-            info_string("//MR: get_new_child_to_evaluate(NodeDescription& description) vor select_child_node(searchSettings)");
+            info_string("//MR: VOR select_child_node(searchSettings)");
             childIdx = currentNode->select_child_node(searchSettings);
-            info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx));
+            info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx) + "\n");
         }
+        info_string("//MR apply_virtual_loss_to_child()\n");
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings->virtualLoss);
         trajectoryBuffer.emplace_back(NodeAndIdx(currentNode, childIdx));
 
         nextNode = currentNode->get_child_node(childIdx);
         description.depth++;
         if (nextNode == nullptr) {
-            info_string("//MR: nextNode ist null -> fuege leeren Knoten hinzu");
+            info_string("//MR: nextNode ist null -> fuege Knoten mit nullptr und initWerten hinzu ...");
 #ifdef MCTS_STORE_STATES
             StateObj* newState = currentNode->get_state()->clone();
 #else
@@ -211,6 +213,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 #ifdef MCTS_STORE_STATES
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
 #else
+            info_string("//MR: ... und hänge den Knoten an childIndex = " + to_string(childIdx) + " an den Baum (nullptr ersetzen durch Knoten)");
             nextNode = add_new_node_to_tree(newState.get(), currentNode, childIdx, description.type);
 #endif
             currentNode->unlock();
@@ -226,7 +229,6 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     mapWithMutex->mtx.unlock();
                 }
 #else
-                info_string("//MR: nodeType NODE_NEW_NODE in get_new_child_to_evalate");
                 // fill a new board in the input_planes vector
                 // we shift the index by nbNNInputValues each time
                 newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
@@ -238,7 +240,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             return nextNode;
         }
         if (nextNode->is_terminal()) {
-            info_string("//MR: nextNode ist terminal");
+            info_string("//MR: nextNode->is_terminal()");
             description.type = NODE_TERMINAL;
             currentNode->unlock();
             return nextNode;
@@ -257,7 +259,8 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 
             if (nextNode->is_transposition_return(transposQValue)) {
                 const float qValue = get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value());
-                //MR Der NoveltyScore muss nicht wie die qValues gechekt werden, da kein virtualLoss angewendet wird... kann einfach übernommen werden
+                //MR Der NoveltyScore muss nicht wie die qValues gecheckt werden, da kein virtualLoss angewendet wird... kann einfach übernommen werden
+                //MR aber nochmal fragen! -> mit dem check ist die Funktion  get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value()) gemeint
                 const float noveltyScore = nextNode->get_novelty_score();
                 nextNode->unlock();
                 description.type = NODE_TRANSPOSITION;
@@ -298,7 +301,7 @@ void SearchThread::reset_stats()
 //MR add inputPlanes to params
 void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes)
 {
-    info_string("//MR: fill_nn_results(...)");
+    info_string("//MR: fill_nn_results(...) to newNode(s)");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
@@ -325,9 +328,11 @@ void SearchThread::set_nn_results_to_child_nodes()
 
 void SearchThread::backup_value_outputs()
 {
+    info_string("//MR: jetzt kommt backup_values fuer newTrajectories mit Size: " + to_string(newTrajectories.size()));
     backup_values(*newNodes, newTrajectories);
     newNodeSideToMove->reset_idx();
     //MR add noveltyScore to params
+    info_string("//MR: jetzt kommt backup_values fuer transpositionTrajectories mit Size: " + to_string(transpositionTrajectories.size()));
     backup_values(transpositionValues.get(), transpositionTrajectories, transpositionNoveltyScores.get());
 }
 
@@ -372,12 +377,11 @@ void SearchThread::create_mini_batch()
 
         trajectoryBuffer.clear();
         actionsBuffer.clear();
-        info_string("//MR:create_mini_batch() vor get_new_child_to_evaluate(description)");
+        info_string("//MR: create_mini_batch() VOR get_new_child_to_evaluate(description)\n");
         Node* newNode = get_new_child_to_evaluate(description);
         depthSum += description.depth;
         depthMax = max(depthMax, description.depth);
 
-        info_string("//MR: create_mini_batch() nach get_new_child_to_evaluate() -> new Node Type = " + to_string(description.type));
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
             //MR add noveltyScore to params
@@ -403,12 +407,12 @@ void SearchThread::thread_iteration()
     create_mini_batch();
 #ifndef SEARCH_UCT
     if (newNodes->size() != 0) {
-        info_string("//MR: thread_iteration() nach create_mini_batch()");
+        info_string("//MR: PREDICT FOR NEWNODES!!! in thread_iteration()");
         net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
         set_nn_results_to_child_nodes();
     }
 #endif
-    info_string("//MR: thread_iteration() vor backup_value_outputs()");
+    info_string("\n//MR: BACKPROP!!! in thread_iteration()");
     backup_value_outputs();
     backup_collisions();
 }
@@ -433,7 +437,7 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
         backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, node->get_novelty_score());
 #else
         //MR add node->get_novelty_score() to params
-        info_string("//MR: backup_values(...) mit freeBackup = false");
+        info_string("//MR: backup_values(...) mit freeBackup = false und newTraject Index = " + to_string(idx));
         backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, node->get_novelty_score());
 #endif
     }
@@ -446,7 +450,7 @@ void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>&
         const float value = values->get_element(idx);
         //MR
         const float noveltyScore = noveltyScores->get_element(idx);
-        info_string("//MR: backup_values(...) mit freeBackup = true");
+        info_string("//MR: backup_values(...) mit freeBackup = true und transpoTraject Index = " + to_string(idx));
         backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore);
     }
     values->reset_idx();
@@ -490,7 +494,7 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
         return;
     }
 #endif
-    info_string("//MR: node_assign_value(...) mit value: " + to_string(valueOutputs[batchIdx]));
+    info_string("//MR: newNode node_assign_value(...) mit value: " + to_string(valueOutputs[batchIdx]));
     node->set_value(valueOutputs[batchIdx]);
 }
 
@@ -500,11 +504,15 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     bool isNovel = false;
     int numberOfNovelFacts = 0;
 
+    //MR Die factPlanes fehlen hier noch, in denen die neuen Values gespeichert werden!!! siehe python Version
+    //MR Außerdem darf ich nicht nur den aktuellen value des Zustandes auslesen
+
     // 8 * 8 = 64 squares * 12 piecetypes
-    size_t inputPlanesSize = 8 * 8 * 12;
+    size_t inputPlanesSize = 8 * 8 * 12; //MR ist das evlt nbNNInputValues? net->get_nb_input_values_total() siehe get_child_node_to_evaluate()
     for (float i = 0; i < inputPlanesSize; i++)
     {
-        if (valueOutputs[batchIdx] > inputPlanes[batchIdx]) {
+        if (valueOutputs[batchIdx] > inputPlanes[batchIdx]) { //MR hier muss inputPlanes raus und factPlanes rein!
+            //MR hier muss der entsprechende Index des factPlanes auf den neuen value gesetzt werden
             isNovel = true;
             numberOfNovelFacts++; //MR raus nach debug!
         }
@@ -513,7 +521,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     if (isNovel) {
         node->set_novelty_score(searchSettings->noveltyValue);
     }
-    info_string("//MR assign_novelty_score(): isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " and number of novel facts = " + to_string(numberOfNovelFacts));
+    info_string("//MR newNode node_assign_novelty_score(): isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " and number of novel facts = " + to_string(numberOfNovelFacts));
 }
 
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings)

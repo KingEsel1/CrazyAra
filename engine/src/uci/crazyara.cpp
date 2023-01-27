@@ -98,7 +98,7 @@ void CrazyAra::uci_loop(int argc, char* argv[])
         //MR commands for cutechess-cli -> nur als Hinweis!!
         //"setoption name First_Device_ID value 0",
         //"setoption name Centi_Novelty_Decay value "
-        
+
 
         //MR commands for console debugging
         "setoption name Threads value 1",

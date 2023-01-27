@@ -466,16 +466,16 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
-    info_string("MR: d->qValues[childIdx] vor VL = " + to_string(d->qValues[childIdx]));
+    info_string("//MR: d->qValues[childIdx] vor VL = " + to_string(d->qValues[childIdx]));
     d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
-    info_string("MR: d->qValues[childIdx] nach VL = " + to_string(d->qValues[childIdx]));
+    info_string("//MR: d->qValues[childIdx] nach VL = " + to_string(d->qValues[childIdx]));
     // virtual increase the number of visits
-    info_string("MR: d->childNumberVisits[childIdx] vor VL = " + to_string(d->childNumberVisits[childIdx]));
+    info_string("//MR: d->childNumberVisits[childIdx] vor VL = " + to_string(d->childNumberVisits[childIdx]));
     d->childNumberVisits[childIdx] += virtualLoss;
-    info_string("MR: d->childNumberVisits[childIdx] nach VL = " + to_string(d->childNumberVisits[childIdx]));
-    info_string("MR: visitSum vor VL = " + to_string(d->visitSum));
+    info_string("//MR: d->childNumberVisits[childIdx] nach VL = " + to_string(d->childNumberVisits[childIdx]));
+    info_string("//MR: visitSum vor VL = " + to_string(d->visitSum));
     d->visitSum += virtualLoss;
-    info_string("MR: visitSum nach VL = " + to_string(d->visitSum));
+    info_string("//MR: visitSum nach VL = " + to_string(d->visitSum));
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, virtualLoss);
 }
@@ -527,7 +527,6 @@ void Node::increment_no_visit_idx()
         if (d->noVisitIdx == PRESERVED_ITEMS) {
             reserve_full_memory();
         }
-        info_string("//MR: increment_no_visit_idx()");
         d->add_empty_node();
     }
 }
@@ -538,7 +537,6 @@ void Node::fully_expand_node()
         reserve_full_memory();
         for (size_t idx = d->noVisitIdx; idx < get_number_child_nodes(); ++idx) {
             d->add_empty_node();
-            info_string("//MR: increment_no_visit_idx()");
         }
         d->noVisitIdx = get_number_child_nodes();
         // keep this exact order
@@ -1083,7 +1081,7 @@ size_t get_best_action_index(const Node *curNode, bool fast, float qValueWeight,
 
 ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
 {
-    if (!sorted) {
+    if (!sorted) { //MR falls noch keine Kindknoten im Suchbaum existieren erstelle 2 neue Knoten mit child als nullptr
         prepare_node_for_visits();
     }
     if (d->noVisitIdx == 1) {
@@ -1099,32 +1097,23 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     DynamicVector<float> noveltyWeights(d->childNumberVisits.size());
     //info_string("//MR: noveltyDecay = " + to_string(searchSettings->noveltyDecay));
     if (searchSettings->noveltyDecay != 0.0f) {
-        for (int i = 0; i < d->childNumberVisits.size(); i++) {
-            info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i]));
-        }
         DynamicVector<float> noveltyWeights = sqrt(double(searchSettings->noveltyDecay) / (3 * d->childNumberVisits + searchSettings->noveltyDecay));
-    }
-    for (int i = 0; i < noveltyWeights.size(); i++) {
-        info_string("//MR: noveltyWeights" + to_string(i) + " = " + to_string(noveltyWeights[i]));
     }
     
     assert(sum(d->childNumberVisits) == d->visitSum);
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
-    //MR
-    for (int i = 0; i < d->noveltyScores.size(); i++) {
-        info_string("//MR: d->noveltyScores" + to_string(i) + " = " + to_string(d->noveltyScores[i]));
-    }
-    for (int i = 0; i < d->qValues.size(); i++) {
-        info_string("//MR: d->qValues" + to_string(i) + " = " + to_string(d->qValues[i]));
-    }
     DynamicVector<float> uVal = get_current_u_values(searchSettings);
-    for (int i = 0; i < uVal.size(); i++) {
-        info_string("//MR: uValues" + to_string(i) + " = " + to_string(uVal[i]));
+    for (int i = 0; i < d->childNumberVisits.size(); i++) {
+        info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i])
+            + " | noveltyWeights" + to_string(i) + " = " + to_string(noveltyWeights[i])
+            + " | d->noveltyScores" + to_string(i) + " = " + to_string(d->noveltyScores[i])
+            + " | d->qValues" + to_string(i) + " = " + to_string(d->qValues[i])
+            + " | uValues" + to_string(i) + " = " + to_string(uVal[i]));
     }
+    //MR
     return argmax(noveltyWeights * d->noveltyScores + (1 - noveltyWeights) * d->qValues + get_current_u_values(searchSettings));
-    //return argmax(d->qValues + get_current_u_values(searchSettings)); //MR add Novelty stuff
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)

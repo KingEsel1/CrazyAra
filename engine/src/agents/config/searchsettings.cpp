@@ -35,7 +35,7 @@ SearchSettings::SearchSettings():
         qVetoDelta(0.4f),
         virtualLoss(1.0f),
         verbose(true),
-        epsilonChecksCounter(100),
+        epsilonChecksCounter(0), //MR war davor 100!!!
         useMCGS(false),  //MR geaendert!!
         cpuctInit(2.5f),
         cpuctBase(19652.0f),
@@ -46,7 +46,7 @@ SearchSettings::SearchSettings():
         allowEarlyStopping(false),
         useNPSTimemanager(false),
         useTablebase(false),
-        epsilonGreedyCounter(20),
+        epsilonGreedyCounter(0), //MR war davor 20!!!
         reuseTree(true),
         mctsSolver(false),
     //MR

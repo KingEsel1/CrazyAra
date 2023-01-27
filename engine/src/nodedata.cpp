@@ -51,13 +51,14 @@ void NodeData::reserve_initial_space()
     // (the q and u values are stacked into 1 list in order to speed-up the argmax() operation
     qValues.reserve(initSize);
 
+    //MR
+    noveltyScores.reserve(initSize);
+
     childNodes.reserve(initSize);
     virtualLossCounter.reserve(initSize);
     nodeTypes.reserve(initSize);
-    info_string("//MR: reserve_initial_space()");
     add_empty_node();
     if (initSize > 1) {
-        info_string("//MR: reserve_initial_space() innerhalb if");
         add_empty_node();
         ++noVisitIdx;
     }
