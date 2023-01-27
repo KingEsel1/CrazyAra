@@ -437,7 +437,8 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
         backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], solveForTerminal, node->get_novelty_score());
 #else
         //MR add node->get_novelty_score() to params
-        info_string("//MR: backup_values(...) mit freeBackup = false und newTraject Index = " + to_string(idx));
+        info_string("//MR: backup_values(...) mit freeBackup = false und newTraject Index = " + to_string(idx)
+            + " und neuem noveltyScore = " + to_string(node->get_novelty_score()));
         backup_value<false>(node->get_value(), searchSettings->virtualLoss, trajectories[idx], false, node->get_novelty_score());
 #endif
     }
@@ -450,7 +451,8 @@ void SearchThread::backup_values(FixedVector<float>* values, vector<Trajectory>&
         const float value = values->get_element(idx);
         //MR
         const float noveltyScore = noveltyScores->get_element(idx);
-        info_string("//MR: backup_values(...) mit freeBackup = true und transpoTraject Index = " + to_string(idx));
+        info_string("//MR: backup_values(...) mit freeBackup = true und transpoTraject Index = " + to_string(idx)
+            + " und neuem noveltyScore = " + to_string(noveltyScore));
         backup_value<true>(value, searchSettings->virtualLoss, trajectories[idx], false, noveltyScore);
     }
     values->reset_idx();
