@@ -815,6 +815,7 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
     double targetQValue = 0;                                                                           //MR
     //info_string("//MR noveltyScore vor transpo = " + to_string(noveltyScore));
     info_string("//MR: Die Trajektorie hat so viele Knoten nach dem Wurzelknoten " + to_string(trajectory.size()));
+    int i = trajectory.size() - 1; //MR am Ende Variable i entfernen, nur zu testzwecken!!
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
@@ -823,10 +824,10 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
                 value = get_transposition_q_value(transposVisits, transposQValue, targetQValue);
                 //MR
                 noveltyScore = it->node->get_novelty_score();
-                info_string("//MR: Von hinten hat Knoten " + to_string(it) + " transposVisit != 0!! -> anderer noveltyScore wird an revVLaU() uebergeben!!");
+                info_string("//MR: Knoten am Idx " + to_string(i) + " der Trajakt. hat transposVisit != 0!! -> anderer noveltyScore wird an revVLaU() uebergeben!!");
             }
         }
-        //info_string("//MR                                                          noveltyScore nach transpo = " + to_string(noveltyScore));
+        i--;
 
 #ifndef MCTS_SINGLE_PLAYER
         value = -value;
