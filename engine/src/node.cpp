@@ -669,7 +669,7 @@ void Node::set_value(float value)
     this->valueSum = value * this->realVisitsSum;
 }
 
-void Node::set_novelty_score(float noveltyScore)
+void Node::set_novelty_score(double noveltyScore)
 {
     this->noveltyScore = noveltyScore;
 }
