@@ -234,7 +234,7 @@ public:
             info_string("//MR: revVLaU(): realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)));
             //MR alt: d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + noveltyScore) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1);
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)) + noveltyScore) / (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss) + 1);
-            info_string("//MR: revVLaU(): UPDATE: qValue nach Backprop: " + to_string(d->qValue[childIdx])
+            info_string("//MR: revVLaU(): UPDATE: qValue nach Backprop: " + to_string(d->qValues[childIdx])
                 + " | noveltyScore nach Backprop : " + to_string(d->noveltyScores[childIdx]));
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
