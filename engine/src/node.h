@@ -211,7 +211,7 @@ public:
 
         //MR d->virtualLossCounter[childIdx] enthaelt den summierten virtualLoss eines Kindknotens insgesamt
         info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]) + " virtualLoss = " + to_string(virtualLoss)
-            " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
+            + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
         if (d->childNumberVisits[childIdx] == virtualLoss) { //MR BUG?: d->virtualLossCounter[childIdx]
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
@@ -219,7 +219,7 @@ public:
             //MR
             d->noveltyScores[childIdx] = noveltyScore;
             info_string("//MR: revVLaU(): INIT: noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx])
-                + " | qValue nach Backprop : " + to_string(d->qValue[childIdx]));
+                + " | qValue nach Backprop : " + to_string(d->qValues[childIdx]));
         }
         else {
             // revert virtual loss and update the Q-value
