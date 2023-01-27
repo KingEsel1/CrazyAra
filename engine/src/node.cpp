@@ -552,6 +552,7 @@ float Node::get_value() const
 //MR
 float Node::get_novelty_score() const
 {
+    info_string("//MR: In get_novelty_score() ist der noveltyScore = " + to_string(noveltyScore));
     return noveltyScore;
 }
 
@@ -671,6 +672,7 @@ void Node::set_value(float value)
 
 void Node::set_novelty_score(double noveltyScore)
 {
+    info_string("//MR: In set_novelty_score() ist der noveltyScore = " + to_string(noveltyScore));
     this->noveltyScore = noveltyScore;
 }
 
