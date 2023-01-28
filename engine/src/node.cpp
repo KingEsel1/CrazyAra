@@ -83,6 +83,7 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings):
     legalActions(state->legal_actions()),
     key(state->hash_key()),
     valueSum(0),
+    noveltyScore(0),
     d(nullptr),
     #ifdef MCTS_STORE_STATES
     state(state),
