@@ -512,6 +512,9 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     //MR calculate novelty score here!
     bool isNovel = false;
     int numberOfNovelFacts = 0;
+    int row = 0;
+    int col = 0;
+    int chanel = 0;
 
     //MR Die factPlanes fehlen hier noch, in denen die neuen Values gespeichert werden!!! siehe python Version
 
@@ -522,7 +525,11 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     for (int i = 0; i < inputPlanesSize; i++)
     {
         if (inputPlanes[i] > 0) {
-            info_string("//MR: inputPlanes[i] = " + to_string(inputPlanes[i]) + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
+            chanel = i / 64;
+            col = (i % 64) % 8;
+            row = (i % 64) / 8;
+            info_string("//MR: i = " + to_string(i) + " | chanel = " + to_string(chanel) + " | row = " + to_string(row) + " | col = " + to_string(col)
+                + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
             if (valueOutputs[batchIdx] > factPlanes[i]) {
                 factPlanes[i] = valueOutputs[batchIdx];
                 isNovel = true;
