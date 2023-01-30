@@ -175,7 +175,7 @@ public:
      *       = (-0.25 * 2 + 1) / (2 - 1)
      *       = 0.5
      * 4. Update Q-value by new value (e.g. val = 0.7)
-     *   Q_3 = (Q_2 * (n_1 - vl) + val) / (n_1)     //MR warum steht im Nenner n_1 und nicht (n_1 - vl + 1)???
+     *   Q_3 = (Q_2 * (n_1 - vl) + val) / (n_1)     //MR warum steht im Nenner n_1 und nicht (n_1 - vl + 1)??? -> Resultat bei vl=1 ist das gleiche, aber sonst nicht...
      *       = (0.5 * (2 - 1) + 0.7) / 2
      *       = 0.6
      *
@@ -225,14 +225,15 @@ public:
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss + value)
-                / d->childNumberVisits[childIdx]; //MR: Muss hier ein +1 hin in den Nenner? -> evlt. ohne VL testen...
+                / d->childNumberVisits[childIdx]; //MR: Im Nenner muss eigentlich (d->childNumberVisits[childIdx] - virtualLoss + 1) stehen (siehe oben im Kommentar)
             assert(!isnan(d->qValues[childIdx]));
 
-            //MR noveltyScore bekommt kein virtualLoss -> darf ich d->childNumberVisits[childIdx] einfach so verwenden? Laut Beschreibung (oben) steht dort
-            //   n_1 = n_0 + vl drin, also auch der virtual loss... -> deshalb d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] = realVisits -> FALSCH!! d->virtualLossCounter[chIdx] wird oben schon dekrementiert...
+            //MR noveltyScore bekommt kein virtualLoss, deshalb darf ich d->childNumberVisits[childIdx] nicht einfach so verwenden?
+            //   deshalb d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss) = realVisits
+            //   --> Das +virtualLoss muss dahin, weil d->virtualLossCounter[chIdx] oben schon dekrementiert wird...
             //MR ausserdem muss doch der Nenner (d->childNumberVisits[childIdx] + 1) sein -> Mittelwert...
             info_string("//MR: revVLaU(): realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)));
-            //MR alt: d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + noveltyScore) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1);
+            //MR wenn dekrement erst unten, dann: d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + noveltyScore) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1);
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)) + noveltyScore) / (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss) + 1);
             info_string("//MR: revVLaU(): UPDATE: qValue nach Backprop: " + to_string(d->qValues[childIdx])
                 + " | noveltyScore nach Backprop : " + to_string(d->noveltyScores[childIdx]));

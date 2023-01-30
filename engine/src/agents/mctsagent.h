@@ -81,6 +81,10 @@ public:
 
     unique_ptr<ThreadManager> threadManager;
     bool reachedTablebases;
+
+    //MR factPlanes stores the current score of all facts in plane representation
+    float* factPlanes;
+
 public:
     MCTSAgent(NeuralNetAPI* netSingle,
               vector<unique_ptr<NeuralNetAPI>>& netBatches,

@@ -83,6 +83,7 @@ private:
     size_t visitsPreSearch;
     const uint_fast32_t terminalNodeCache;
     bool reachedTablebases;
+    float* factPlanes; //MR
 public:
     /**
      * @brief SearchThread
@@ -131,6 +132,7 @@ public:
     bool is_running() const;
     void set_is_running(bool value);
     void set_reached_tablebases(bool value);
+    void set_fact_planes(float* value); //MR
 
     /**
      * @brief add_new_node_to_tree Adds a new node to the search by either creating a new node or duplicating an exisiting node in case of transposition usage
@@ -193,7 +195,7 @@ private:
 
 void run_search_thread(SearchThread *t);
 //MR add inputPlanes to params
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes);
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, float* inputPlanes);
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings);
 void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, size_t batchIdx, bool isRootNodeTB);
 void node_assign_novelty_score(Node *node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes);

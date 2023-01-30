@@ -40,20 +40,21 @@ size_t SearchThread::get_max_depth() const
     return depthMax;
 }
 
-SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchSettings, MapWithMutex* mapWithMutex):
+SearchThread::SearchThread(NeuralNetAPI* netBatch, const SearchSettings* searchSettings, MapWithMutex* mapWithMutex) :
     NeuralNetAPIUser(netBatch),
     rootNode(nullptr), rootState(nullptr), newState(nullptr),  // will be be set via setter methods
     newNodes(make_unique<FixedVector<Node*>>(searchSettings->batchSize)),
     newNodeSideToMove(make_unique<FixedVector<SideToMove>>(searchSettings->batchSize)),
-    transpositionValues(make_unique<FixedVector<float>>(searchSettings->batchSize*2)),
+    transpositionValues(make_unique<FixedVector<float>>(searchSettings->batchSize * 2)),
     isRunning(true), mapWithMutex(mapWithMutex), searchSettings(searchSettings),
-    tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
+    tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0), 
 #ifdef MCTS_SINGLE_PLAYER
     terminalNodeCache(1),
 #else
-    terminalNodeCache(searchSettings->batchSize*2),
+    terminalNodeCache(searchSettings->batchSize * 2),
 #endif
-    reachedTablebases(false)
+    reachedTablebases(false),
+    factPlanes(nullptr) //MR
 {
     searchLimits = nullptr;  // will be set by set_search_limits() every time before go()
     trajectoryBuffer.reserve(DEPTH_INIT);
@@ -84,6 +85,12 @@ void SearchThread::set_is_running(bool value)
 void SearchThread::set_reached_tablebases(bool value)
 {
     reachedTablebases = value;
+}
+
+//MR
+void SearchThread::set_fact_planes(float* value)
+{
+    factPlanes = value;
 }
 
 Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, ChildIdx childIdx, NodeBackup& nodeBackup)
@@ -299,14 +306,14 @@ void SearchThread::reset_stats()
 }
 
 //MR add inputPlanes to params
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes)
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes)
 {
     info_string("//MR: fill_nn_results(...) to newNode(s)");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
     //MR
-    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes);
+    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes, factPlanes);
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif
@@ -320,7 +327,7 @@ void SearchThread::set_nn_results_to_child_nodes()
         if (!node->is_terminal()) {
             fill_nn_results(batchIdx, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, node,
                             tbHits, rootState->mirror_policy(newNodeSideToMove->get_element(batchIdx)),
-                            searchSettings, rootNode->is_tablebase(), inputPlanes);
+                            searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes);
         }
         ++batchIdx;
     }
@@ -500,25 +507,40 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
     node->set_value(valueOutputs[batchIdx]);
 }
 
-void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes)
+void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes)
 {
     //MR calculate novelty score here!
     bool isNovel = false;
     int numberOfNovelFacts = 0;
 
     //MR Die factPlanes fehlen hier noch, in denen die neuen Values gespeichert werden!!! siehe python Version
-    //MR Außerdem darf ich nicht nur den aktuellen value des Zustandes auslesen
 
     // 8 * 8 = 64 squares * 12 piecetypes
     size_t inputPlanesSize = 8 * 8 * 12; //MR ist das evlt nbNNInputValues? net->get_nb_input_values_total() siehe get_child_node_to_evaluate()
-    for (float i = 0; i < inputPlanesSize; i++)
+    // ckeck if the value of the current state is greater than any score of a fact that is active at the moment
+    // this loop covers all facts on the board (first 12 planes of input representation)
+    for (int i = 0; i < inputPlanesSize; i++)
     {
-        if (valueOutputs[batchIdx] > inputPlanes[batchIdx]) { //MR hier muss inputPlanes raus und factPlanes rein!
-            //MR hier muss der entsprechende Index des factPlanes auf den neuen value gesetzt werden
+        if (valueOutputs[batchIdx] > factPlanes[i]) {
+            factPlanes[i] = valueOutputs[batchIdx];
             isNovel = true;
             numberOfNovelFacts++; //MR raus nach debug!
         }
     }
+
+    // this loop covers the facts for the pocket pieces (planes with index 14 to 23)
+    /*
+    inputPlanesSize = 8 * 8 * 10;
+    int offsetForPocketPieces = 8 * 8 * 14; // first 14 planes -> see ppt pdf
+    for (int i = offsetForPocketPieces; i < inputPlanesSize + offsetForPocketPieces; i++)
+    {
+        if (valueOutputs[batchIdx] > factPlanes[i]) {
+            factPlanes[i] = valueOutputs[batchIdx];
+            isNovel = true;
+            numberOfNovelFacts++; //MR raus nach debug!
+        }
+    }
+    */
 
     if (isNovel) {
         info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));

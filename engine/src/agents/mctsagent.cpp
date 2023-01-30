@@ -57,6 +57,11 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     }
     timeManager = make_unique<TimeManager>(searchSettings->randomMoveFactor);
     generator = default_random_engine(r());
+    //MR
+    int dimFactPlanes = 768; //MR calculate inputDims somehow
+    for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
+        factPlanes[i] = -1.0f;
+    }
 }
 
 MCTSAgent::~MCTSAgent()
@@ -333,11 +338,12 @@ void MCTSAgent::run_mcts_search()
         searchThreads[i]->set_root_state(rootState.get());
         searchThreads[i]->set_search_limits(searchLimits);
         searchThreads[i]->set_reached_tablebases(reachedTablebases);
+        searchThreads[i]->set_fact_planes(factPlanes); //MR
         info_string("//MR: run_mcts_search() loop");
         threads[i] = new thread(run_search_thread, searchThreads[i]);
     }
     int curMovetime = timeManager->get_time_for_move(searchLimits, rootState->side_to_move(), rootNode->plies_from_null()/2);
-    ThreadManagerData tData(rootNode.get(), searchThreads, evalInfo, lastValueEval); //MR anything to add?
+    ThreadManagerData tData(rootNode.get(), searchThreads, evalInfo, lastValueEval);
     ThreadManagerInfo tInfo(searchSettings, searchLimits, overallNPS, rootState->side_to_move());
     ThreadManagerParams tParams(curMovetime, 250, is_game_sceneario(searchLimits), can_prolong_search(rootNode->plies_from_null()/2, timeManager->get_thresh_move()));
     threadManager = make_unique<ThreadManager>(&tData, &tInfo, &tParams);
