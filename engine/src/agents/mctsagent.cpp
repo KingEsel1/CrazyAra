@@ -188,7 +188,7 @@ void MCTSAgent::create_new_root_node(StateObj* state)
     size_t tbHits = 0;
     //MR add inputPlanes to params
     fill_nn_results(0, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, rootNode.get(), tbHits,
-                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes);
+                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes);
 #endif
     rootNode->prepare_node_for_visits();
 }
