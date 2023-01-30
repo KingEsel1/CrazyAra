@@ -1102,7 +1102,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     info_string("//MR: Pruefung searchSettings->noveltyDecay != 0 ergibt -> " + to_string(searchSettings->noveltyDecay != 0));
     if (searchSettings->noveltyDecay != 0) {
         //MR reicht der double im Nenner, um sehr hohe NoveltyWeights zu vermeiden?
-        DynamicVector<float> noveltyWeights = sqrt(double(searchSettings->noveltyDecay) / (3 * d->childNumberVisits + searchSettings->noveltyDecay));
+        noveltyWeights = sqrt(double(searchSettings->noveltyDecay) / (3 * d->childNumberVisits + searchSettings->noveltyDecay));
     }
     
     assert(sum(d->childNumberVisits) == d->visitSum);
