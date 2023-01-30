@@ -58,10 +58,13 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     timeManager = make_unique<TimeManager>(searchSettings->randomMoveFactor);
     generator = default_random_engine(r());
     //MR
+    info_string("//MR: mctsagent -> before factPlanes init!");
     int dimFactPlanes = 768; //MR calculate inputDims somehow
+    float* factPlanes = new float[dimFactPlanes];
     for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
         factPlanes[i] = -1.0f;
     }
+    info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
 }
 
 MCTSAgent::~MCTSAgent()
