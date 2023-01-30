@@ -202,17 +202,12 @@ public:
         ++realVisitsSum; //MR eventuell realVisitSum des Kindknoten benutzen statt d->childNumberVisits[childIdx] <- das ist dumm, da man dann eine neue Variable d->realchildNumberVisits erstellen muss... lieber berechnen
         //info_string("//MR: revVLaU(): realVisitSum des Elternknotens des zu updatenden = " + to_string(realVisitsSum));
 
-        if (noveltyScore > 1.0f || noveltyScore < -1.0f) {
-            //info_string("//MR: revVLaU(): ------------------------------- noveltyScore out of range(-1;1) in revert...: " + to_string(noveltyScore) + " -------------------------------");
-            noveltyScore = 0.0f;
-        }
-
         //info_string("//MR: revVLaU(): noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]) + "mit neuem noveltyScore = " + to_string(noveltyScore));
 
         //MR d->virtualLossCounter[childIdx] enthaelt den summierten virtualLoss eines Kindknotens insgesamt
         //info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]) + " virtualLoss = " + to_string(virtualLoss)
          //    + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
-        if (d->childNumberVisits[childIdx] == virtualLoss) { //MR BUG?: d->virtualLossCounter[childIdx]
+        if (d->childNumberVisits[childIdx] == virtualLoss) { //MR BUG?: d->virtualLossCounter[childIdx] und update_virtual_loss_counter() unten!
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
