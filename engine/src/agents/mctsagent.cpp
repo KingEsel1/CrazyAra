@@ -60,7 +60,7 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     //MR
     info_string("//MR: mctsagent -> before factPlanes init!");
     int dimFactPlanes = 768; //MR calculate inputDims somehow
-    float* factPlanes = new float[dimFactPlanes];
+    factPlanes = new float[dimFactPlanes];
     for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
         factPlanes[i] = -1.0f;
     }
@@ -189,7 +189,18 @@ void MCTSAgent::create_new_root_node(StateObj* state)
     state->get_state_planes(true, inputPlanes, net->get_version());
     net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
     size_t tbHits = 0;
-    //MR add inputPlanes and factPlanes to params
+    /* //MR
+    info_string("//MR: mctsagent -> create_new_root_node!");
+    int dimFactPlanes = 768; //MR calculate inputDims somehow
+    factPlanes = new float[dimFactPlanes];
+    for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
+        factPlanes[i] = -1.0f;
+    }
+    info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
+    */
+    info_string("//MR: hallo");
+    info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
+    //MR add inputPlanes and factPlanes to params -> WOHER KENNT ER fill_nn_results? Das ist doch eine Methode von SearchThread...
     fill_nn_results(0, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, rootNode.get(), tbHits,
                     rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes);
 #endif
