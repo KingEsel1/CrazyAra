@@ -521,11 +521,14 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     // this loop covers all facts on the board (first 12 planes of input representation)
     for (int i = 0; i < inputPlanesSize; i++)
     {
-        if (valueOutputs[batchIdx] > factPlanes[i]) {
-            factPlanes[i] = valueOutputs[batchIdx];
-            isNovel = true;
-            numberOfNovelFacts++; //MR raus nach debug!
-        }
+        if (inputPlanes[i] > 0) {
+            info_string("//MR: inputPlanes[i] = " + to_string(inputPlanes[i]) + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
+            if (valueOutputs[batchIdx] > factPlanes[i]) {
+                factPlanes[i] = valueOutputs[batchIdx];
+                isNovel = true;
+                numberOfNovelFacts++; //MR raus nach debug!
+            }
+        }        
     }
 
     // this loop covers the facts for the pocket pieces (planes with index 14 to 23)
