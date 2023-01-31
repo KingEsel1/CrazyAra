@@ -58,13 +58,13 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     timeManager = make_unique<TimeManager>(searchSettings->randomMoveFactor);
     generator = default_random_engine(r());
     //MR
-    //info_string("//MR: mctsagent -> before factPlanes init!");
+    info_string("//MR: mctsagent -> before factPlanes init!");
     int dimFactPlanes = 768; //MR calculate inputDims somehow
     factPlanes = new float[dimFactPlanes];
     for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
         factPlanes[i] = -1.0f;
     }
-    //info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
+    info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
 }
 
 MCTSAgent::~MCTSAgent()
@@ -123,7 +123,7 @@ size_t MCTSAgent::init_root_node(StateObj *state)
 {
     size_t nodesPreSearch;
     gcThread.oldRootNode = rootNode;
-    //info_string("//MR: erstelle neuen Wurzelknoten aus aktuellem Zustand");
+    info_string("//MR: erstelle neuen Wurzelknoten aus aktuellem Zustand");
     rootNode = get_root_node_from_tree(state);
 
     if (rootNode != nullptr) {
@@ -189,7 +189,7 @@ void MCTSAgent::create_new_root_node(StateObj* state)
     state->get_state_planes(true, inputPlanes, net->get_version());
     net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
     size_t tbHits = 0;
-    //info_string("//MR: mctsagent -> before fill_nn_results in create_new_root_node! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
+    info_string("//MR: mctsagent -> before fill_nn_results in create_new_root_node! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
     //MR add inputPlanes and factPlanes to params -> WOHER KENNT ER fill_nn_results? Das ist doch eine Methode von SearchThread...
     fill_nn_results(0, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, rootNode.get(), tbHits,
                     rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes);
@@ -343,7 +343,7 @@ void MCTSAgent::run_mcts_search()
         searchThreads[i]->set_search_limits(searchLimits);
         searchThreads[i]->set_reached_tablebases(reachedTablebases);
         searchThreads[i]->set_fact_planes(factPlanes); //MR
-       // info_string("//MR: run_mcts_search() loop");
+        info_string("//MR: run_mcts_search() loop");
         threads[i] = new thread(run_search_thread, searchThreads[i]);
     }
     int curMovetime = timeManager->get_time_for_move(searchLimits, rootState->side_to_move(), rootNode->plies_from_null()/2);
@@ -352,16 +352,14 @@ void MCTSAgent::run_mcts_search()
     ThreadManagerParams tParams(curMovetime, 250, is_game_sceneario(searchLimits), can_prolong_search(rootNode->plies_from_null()/2, timeManager->get_thresh_move()));
     threadManager = make_unique<ThreadManager>(&tData, &tInfo, &tParams);
     unique_ptr<thread> tManager = make_unique<thread>(run_thread_manager, threadManager.get());
-    //info_string("//MR: Line before runnerMutex.unlock() in MCTSAgent::run_mcts_search()");
     runnerMutex.unlock();
-    //info_string("//MR: Line after runnerMutex.unlock() in MCTSAgent::run_mcts_search()");
     for (size_t i = 0; i < searchSettings->threads; ++i) {
         threads[i]->join();
     }
     threadManager->kill();
     tManager->join();
     delete[] threads;
-    //info_string("//MR: run_mcts_search() ende");
+    info_string("//MR: run_mcts_search() ende");
 }
 
 void MCTSAgent::stop()
