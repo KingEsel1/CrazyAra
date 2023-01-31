@@ -204,7 +204,6 @@ public:
 
         //info_string("//MR: revVLaU(): noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]) + "mit neuem noveltyScore = " + to_string(noveltyScore));
 
-        //MR d->virtualLossCounter[childIdx] enthaelt den summierten virtualLoss eines Kindknotens insgesamt
         //info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]) + " virtualLoss = " + to_string(virtualLoss)
          //    + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
         if (d->childNumberVisits[childIdx] == virtualLoss) { //MR BUG?: d->virtualLossCounter[childIdx] und update_virtual_loss_counter() unten!
