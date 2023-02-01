@@ -513,6 +513,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     int row = 0;
     int col = 0;
     int chanel = 0;
+    int index = 0;
 
     //MR Die factPlanes fehlen hier noch, in denen die neuen Values gespeichert werden!!! siehe python Version
 
@@ -536,6 +537,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
         }     
 
         if (searchSettings->useFactPlanesOffset && inputPlanes[i + batchIdx * numberInputTotal] > 0) { //MR HIER MUSS DER SHIFT HIN MIT bathIdx!!!!!!
+            index = i + batchIdx * numberInputTotal;
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
