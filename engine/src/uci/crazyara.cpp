@@ -720,6 +720,7 @@ void CrazyAra::init_search_settings()
     //MR
     searchSettings.noveltyDecay = Options["Centi_Novelty_Decay"] / 100.0f;
     searchSettings.noveltyValue = Options["Centi_Novelty_Value"] / 100.0f;
+    searchSettings.useFactPlanesOffset = Options["Use_Fact_Planes_Offset"] / 100.0f; //MR raus nach debug!!
 }
 
 void CrazyAra::init_play_settings()

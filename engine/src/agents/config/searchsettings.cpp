@@ -51,7 +51,8 @@ SearchSettings::SearchSettings():
         mctsSolver(false),
     //MR
         noveltyDecay(0.0f),
-        noveltyValue(0.0f)
+        noveltyValue(0.0f),
+        useFactPlanesOffset(true) //MR nach debug raus!!
 {
 
 }

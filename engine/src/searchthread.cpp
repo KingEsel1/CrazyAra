@@ -325,6 +325,7 @@ void SearchThread::set_nn_results_to_child_nodes()
     size_t batchIdx = 0;
     for (auto node: *newNodes) {
         if (!node->is_terminal()) {
+            info_string("//MR: net->get_nb_input_values_total() " + to_string(net->get_nb_input_values_total()) + " und net->get_nb_input_values_total() / net->get_batch_size() = " + to_string(net->get_nb_input_values_total() / net->get_batch_size()));
             fill_nn_results(batchIdx, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, node,
                             tbHits, rootState->mirror_policy(newNodeSideToMove->get_element(batchIdx)),
                             searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes);
@@ -434,7 +435,7 @@ void run_search_thread(SearchThread *t)
         t->thread_iteration();
     }
     t->set_is_running(false);
-    info_string("//MR: ein thread ist fertig!!! run_search_trhead()");
+    info_string("//MR: ein thread ist fertig!!! run_search_thread()");
 }
 
 void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories) {
@@ -522,18 +523,31 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     // this loop covers all facts on the board (first 12 planes of input representation)
     for (int i = 0; i < inputPlanesSize; i++)
     {
-        if (inputPlanes[i] > 0) { //MR HIER MUSS DER SHIFT HIN MIT bathIdx!!!!!!
+        if (!searchSettings->useFactPlanesOffset && inputPlanes[i] > 0) { //MR Ohne Offset -> eigenlich falsch, aber gute Ergebnisse!??
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            info_string("//MR: i = " + to_string(i) + " | chanel = " + to_string(chanel) + " | row = " + to_string(row) + " | col = " + to_string(col)
+            info_string("//MR: ohne Offset!! i = " + to_string(i) + " | chanel = " + to_string(chanel) + " | row = " + to_string(row) + " | col = " + to_string(col)
                 + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
             if (valueOutputs[batchIdx] > factPlanes[i]) {
                 factPlanes[i] = valueOutputs[batchIdx];
                 isNovel = true;
                 numberOfNovelFacts++; //MR raus nach debug!
             }
-        }        
+        }     
+
+        if (searchSettings->useFactPlanesOffset && inputPlanes[i] > 0) { //MR HIER MUSS DER SHIFT HIN MIT bathIdx!!!!!!
+            chanel = i / 64;
+            col = (i % 64) % 8;
+            row = (i % 64) / 8;
+            info_string("//MR: mit Offset!! i = " + to_string(i) + " | chanel = " + to_string(chanel) + " | row = " + to_string(row) + " | col = " + to_string(col)
+                + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
+            if (valueOutputs[batchIdx] > factPlanes[i]) {
+                factPlanes[i] = valueOutputs[batchIdx];
+                isNovel = true;
+                numberOfNovelFacts++; //MR raus nach debug!
+            }
+        }
     }
 
     // this loop covers the facts for the pocket pieces (planes with index 14 to 23)

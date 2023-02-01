@@ -72,6 +72,7 @@ struct SearchSettings
     //MR
     float noveltyDecay;
     float noveltyValue;
+    bool useFactPlanesOffset; //MR raus nach debug!!
     SearchSettings();
 
 };
