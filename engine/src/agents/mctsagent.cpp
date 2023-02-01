@@ -192,7 +192,7 @@ void MCTSAgent::create_new_root_node(StateObj* state)
     info_string("//MR: mctsagent -> before fill_nn_results in create_new_root_node! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
     //MR add inputPlanes and factPlanes to params -> WOHER KENNT ER fill_nn_results? Das ist doch eine Methode von SearchThread...
     fill_nn_results(0, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, rootNode.get(), tbHits,
-                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes);
+                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total());
 #endif
     rootNode->prepare_node_for_visits();
 }
