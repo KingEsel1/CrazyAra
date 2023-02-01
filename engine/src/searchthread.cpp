@@ -306,14 +306,14 @@ void SearchThread::reset_stats()
 }
 
 //MR add inputPlanes to params
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes)
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total)
 {
     info_string("//MR: fill_nn_results(...) to newNode(s)");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
     //MR
-    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes, factPlanes);
+    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes, factPlanes, number_input_total);
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif
@@ -325,10 +325,9 @@ void SearchThread::set_nn_results_to_child_nodes()
     size_t batchIdx = 0;
     for (auto node: *newNodes) {
         if (!node->is_terminal()) {
-            info_string("//MR: net->get_nb_input_values_total() " + to_string(net->get_nb_input_values_total()) + " und net->get_nb_input_values_total() / net->get_batch_size() = " + to_string(net->get_nb_input_values_total() / net->get_batch_size()));
             fill_nn_results(batchIdx, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, node,
                             tbHits, rootState->mirror_policy(newNodeSideToMove->get_element(batchIdx)),
-                            searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes);
+                            searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total());
         }
         ++batchIdx;
     }
@@ -506,7 +505,7 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
     node->set_value(valueOutputs[batchIdx]);
 }
 
-void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes)
+void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes, int numberInputTotal)
 {
     //MR calculate novelty score here!
     bool isNovel = false;
@@ -536,12 +535,12 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
         }     
 
-        if (searchSettings->useFactPlanesOffset && inputPlanes[i] > 0) { //MR HIER MUSS DER SHIFT HIN MIT bathIdx!!!!!!
+        if (searchSettings->useFactPlanesOffset && inputPlanes[i + batchIdx * numberInputTotal] > 0) { //MR HIER MUSS DER SHIFT HIN MIT bathIdx!!!!!!
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            info_string("//MR: mit Offset!! i = " + to_string(i) + " | chanel = " + to_string(chanel) + " | row = " + to_string(row) + " | col = " + to_string(col)
-                + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
+            info_string("//MR: mit Offset! i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col)
+                + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
             if (valueOutputs[batchIdx] > factPlanes[i]) {
                 factPlanes[i] = valueOutputs[batchIdx];
                 isNovel = true;
