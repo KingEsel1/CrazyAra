@@ -73,6 +73,7 @@ struct SearchSettings
     float noveltyDecay;
     float noveltyValue;
     bool useFactPlanesOffset; //MR raus nach debug!!
+    bool usePocketForNovelty; //MR raus nach debug!!
     SearchSettings();
 
 };

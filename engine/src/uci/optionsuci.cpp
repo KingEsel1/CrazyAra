@@ -216,7 +216,8 @@ void OptionsUCI::init(OptionsMap &o)
     //MR
     o["Centi_Novelty_Decay"]           << Option(0, 0, 99999);
     o["Centi_Novelty_Value"]           << Option(0, 0, 99999);
-    o["Use_Fact_Planes_Offset"]         << Option(true); //MR raus nach debug!!!
+    o["Use_Fact_Planes_Offset"]        << Option(true); //MR raus nach debug!!!
+    o["Use_Pocket_For_Novelty"]        << Option(true); //MR raus nach debug!!!
 }
 
 void OptionsUCI::setoption(istringstream &is, int& variant, StateObj& state)

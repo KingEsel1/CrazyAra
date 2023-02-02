@@ -53,6 +53,7 @@ SearchSettings::SearchSettings():
         noveltyDecay(0.0f),
         noveltyValue(0.0f),
         useFactPlanesOffset(true) //MR nach debug raus!!
+        usePocketForNovelty(true) //MR nach debug raus!!
 {
 
 }

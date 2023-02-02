@@ -510,6 +510,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     //MR calculate novelty score here!
     bool isNovel = false;
     int numberOfNovelFacts = 0;
+    int numberOfNovelPocketPieces = 0;
     int row = 0;
     int col = 0;
     int chanel = 0;
@@ -541,7 +542,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            info_string("//MR: mit Offset! index=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col)
+            info_string("//MR: chess mit Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col)
                 + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
             if (valueOutputs[batchIdx] > factPlanes[i]) {
                 factPlanes[i] = valueOutputs[batchIdx];
@@ -552,18 +553,38 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     }
 
     // this loop covers the facts for the pocket pieces (planes with index 14 to 23)
-    /*
     inputPlanesSize = 8 * 8 * 10;
     int offsetForPocketPieces = 8 * 8 * 14; // first 14 planes -> see ppt pdf
-    for (int i = offsetForPocketPieces; i < inputPlanesSize + offsetForPocketPieces; i++)
-    {
-        if (valueOutputs[batchIdx] > factPlanes[i]) {
-            factPlanes[i] = valueOutputs[batchIdx];
-            isNovel = true;
-            numberOfNovelFacts++; //MR raus nach debug!
+    if (searchSettings->usePocketForNovelty) {
+        for (int i = offsetForPocketPieces; i < inputPlanesSize + offsetForPocketPieces; i++)
+        {
+            if (!searchSettings->useFactPlanesOffset && inputPlanes[i] > 0) {
+                index = i + batchIdx * numberInputTotal;
+                chanel = i / 64;
+                info_string("//MR: pocket kein Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel)
+                    + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
+                if (valueOutputs[batchIdx] > factPlanes[i]) {
+                    factPlanes[i] = valueOutputs[batchIdx];
+                    isNovel = true;
+                    numberOfNovelFacts++; //MR raus nach debug!
+                    numberOfNovelPocketPieces++; //MR raus nach debug!
+                }
+            }
+
+            if (searchSettings->useFactPlanesOffset && inputPlanes[i + batchIdx * numberInputTotal] > 0) {
+                index = i + batchIdx * numberInputTotal;
+                chanel = i / 64;
+                info_string("//MR: pocket Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel)
+                    + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
+                if (valueOutputs[batchIdx] > factPlanes[i]) {
+                    factPlanes[i] = valueOutputs[batchIdx];
+                    isNovel = true;
+                    numberOfNovelFacts++; //MR raus nach debug!
+                    numberOfNovelPocketPieces++; //MR raus nach debug!
+                }
+            }
         }
     }
-    */
 
     if (isNovel) {
         info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
