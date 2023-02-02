@@ -551,11 +551,12 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
         }
     }
-
-    // this loop covers the facts for the pocket pieces (planes with index 14 to 23)
-    inputPlanesSize = 8 * 8 * 10;
-    int offsetForPocketPieces = 8 * 8 * 14; // first 14 planes -> see ppt pdf
+#ifdef MODE_CRAZYHOUSE
+    info_string("//MR: mode crazyhouse");
     if (searchSettings->usePocketForNovelty) {
+        // this loop covers the facts for the pocket pieces (planes with index 14 to 23)
+        inputPlanesSize = 8 * 8 * 10;
+        int offsetForPocketPieces = 8 * 8 * 14; // first 14 planes -> see ppt pdf
         for (int i = offsetForPocketPieces; i < inputPlanesSize + offsetForPocketPieces; i++)
         {
             if (!searchSettings->useFactPlanesOffset && inputPlanes[i] > 0) {
@@ -585,6 +586,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
         }
     }
+#endif // MODE_CRAZYHOUSE
 
     if (isNovel) {
         //info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
