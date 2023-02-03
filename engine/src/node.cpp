@@ -467,13 +467,13 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
-    //info_string("//MR: d->qValues[childIdx] vor VL = " + to_string(d->qValues[childIdx]));
+    info_string("//MR: d->qValues[childIdx] vor VL = " + to_string(d->qValues[childIdx]));
     d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
-    //info_string("//MR: d->qValues[childIdx] nach VL = " + to_string(d->qValues[childIdx]));
+    info_string("//MR: d->qValues[childIdx] nach VL = " + to_string(d->qValues[childIdx]));
     // virtual increase the number of visits
-    //info_string("//MR: d->childNumberVisits[childIdx] vor VL = " + to_string(d->childNumberVisits[childIdx]));
+    info_string("//MR: d->childNumberVisits[childIdx] vor VL = " + to_string(d->childNumberVisits[childIdx]));
     d->childNumberVisits[childIdx] += virtualLoss;
-    //info_string("//MR: d->childNumberVisits[childIdx] nach VL = " + to_string(d->childNumberVisits[childIdx]));
+    info_string("//MR: d->childNumberVisits[childIdx] nach VL = " + to_string(d->childNumberVisits[childIdx]));
     d->visitSum += virtualLoss;
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, virtualLoss);
@@ -619,12 +619,12 @@ void backup_collision(float virtualLoss, const Trajectory& trajectory) {
 void Node::revert_virtual_loss(ChildIdx childIdx, float virtualLoss)
 {
     lock();
-    //info_string("//MR: revVL(): d->qValues[childIdx] vor revert = " + to_string(d->qValues[childIdx]) + " mit childIdx = " + to_string(childIdx));
+    info_string("//MR: revVL(): d->qValues[childIdx] vor revert = " + to_string(d->qValues[childIdx]) + " mit childIdx = " + to_string(childIdx));
     d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
-    //info_string("//MR: revVL(): d->qValues[childIdx] nach revert = " + to_string(d->qValues[childIdx]));
-    //info_string("//MR: revVL(): d->childNumberVisits[childIdx] vor revert = " + to_string(d->childNumberVisits[childIdx]));
+    info_string("//MR: revVL(): d->qValues[childIdx] nach revert = " + to_string(d->qValues[childIdx]));
+    info_string("//MR: revVL(): d->childNumberVisits[childIdx] vor revert = " + to_string(d->childNumberVisits[childIdx]));
     d->childNumberVisits[childIdx] -= virtualLoss;
-    //info_string("//MR: revVL(): d->childNumberVisits[childIdx] nach revert = " + to_string(d->childNumberVisits[childIdx]));
+    info_string("//MR: revVL(): d->childNumberVisits[childIdx] nach revert = " + to_string(d->childNumberVisits[childIdx]));
     d->visitSum -= virtualLoss;
     // decrement virtual loss counter
     update_virtual_loss_counter<false>(childIdx, virtualLoss);
