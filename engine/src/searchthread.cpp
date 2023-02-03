@@ -551,6 +551,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
         }
     }
+    info_string("//MR: MODE_CHESS and MODE_CRAZYHOUSE!");
 #ifdef MODE_CRAZYHOUSE
     info_string("//MR: mode crazyhouse");
     if (searchSettings->usePocketForNovelty) {
