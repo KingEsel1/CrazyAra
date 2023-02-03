@@ -552,7 +552,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
         }
     }
 #ifdef MODE_CRAZYHOUSE
-    //info_string("//MR: mode crazyhouse");
+    info_string("//MR: mode crazyhouse");
     if (searchSettings->usePocketForNovelty) {
         // this loop covers the facts for the pocket pieces (planes with index 14 to 23)
         inputPlanesSize = 8 * 8 * 10;
