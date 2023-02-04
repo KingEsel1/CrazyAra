@@ -1118,7 +1118,8 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     }
     */
     //MR
-    return argmax(noveltyWeights * d->noveltyScores + (1 - noveltyWeights) * d->qValues + get_current_u_values(searchSettings));
+    //return argmax(noveltyWeights * d->noveltyScores + (1 - noveltyWeights) * d->qValues + get_current_u_values(searchSettings));
+    return argmax(d->qValues + get_current_u_values(searchSettings));
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)
