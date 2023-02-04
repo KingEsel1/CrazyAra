@@ -337,11 +337,11 @@ void SearchThread::set_nn_results_to_child_nodes()
 
 void SearchThread::backup_value_outputs()
 {
-    info_string("//MR: jetzt kommt backup_values fuer newTrajectories mit Size: " + to_string(newTrajectories.size()));
+    //info_string("//MR: jetzt kommt backup_values fuer newTrajectories mit Size: " + to_string(newTrajectories.size()));
     backup_values(*newNodes, newTrajectories);
     newNodeSideToMove->reset_idx();
     //MR add noveltyScore to params
-    info_string("//MR: jetzt kommt backup_values fuer transpositionTrajectories mit Size: " + to_string(transpositionTrajectories.size()));
+    //info_string("//MR: jetzt kommt backup_values fuer transpositionTrajectories mit Size: " + to_string(transpositionTrajectories.size()));
     backup_values(transpositionValues.get(), transpositionTrajectories, transpositionNoveltyScores.get());
 }
 
