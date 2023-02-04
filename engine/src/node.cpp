@@ -1107,7 +1107,6 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
-    /*
     DynamicVector<float> uVal = get_current_u_values(searchSettings);
     for (int i = 0; i < d->childNumberVisits.size(); i++) {
         //info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i])
@@ -1116,7 +1115,6 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
             + " | d->qValues" + to_string(i) + " = " + to_string(d->qValues[i])
             + " | uValues" + to_string(i) + " = " + to_string(uVal[i]));
     }
-    */
     //MR
     return argmax(noveltyWeights * d->noveltyScores + (1 - noveltyWeights) * d->qValues + get_current_u_values(searchSettings));
     //return argmax(d->qValues + get_current_u_values(searchSettings));

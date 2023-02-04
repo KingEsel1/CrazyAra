@@ -169,7 +169,7 @@ Node* SearchThread::get_starting_node(Node* currentNode, NodeDescription& descri
 
 Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 {
-    //info_string("//MR: get_new_child_to_evaluate() -> erstelle eine neue Trajektorie");
+    info_string("//MR: get_new_child_to_evaluate() -> erstelle eine neue Trajektorie");
     description.depth = 0;
     Node* currentNode = rootNode;
     Node* nextNode;
@@ -196,7 +196,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         if (childIdx == uint16_t(-1)) {
             //info_string("//MR: select_child_node(searchSettings)");
             childIdx = currentNode->select_child_node(searchSettings);
-            //info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx) + "\n");
+            info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx) + "\n");
         }
         //info_string("//MR apply_virtual_loss_to_child()");
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings->virtualLoss);
@@ -590,6 +590,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     if (isNovel) {
         //info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
         node->set_novelty_score((double) searchSettings->noveltyValue);
+        info_string("//MR: numberOfNovelFacts=" + to_string(numberOfNovelFacts));
     }
     //info_string("//MR: newNode node_assign_novelty_score(): isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " and number of novel facts = " + to_string(numberOfNovelFacts));
 }
