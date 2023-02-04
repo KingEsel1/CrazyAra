@@ -1109,7 +1109,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
     DynamicVector<float> uVal = get_current_u_values(searchSettings);
     for (int i = 0; i < d->childNumberVisits.size(); i++) {
-        //info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i])
+        info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i])
             + " | noveltyWeights" + to_string(i) + " = " + to_string(noveltyWeights[i])
             + " | d->noveltyScores" + to_string(i) + " = " + to_string(d->noveltyScores[i])
             + " | d->qValues" + to_string(i) + " = " + to_string(d->qValues[i])
