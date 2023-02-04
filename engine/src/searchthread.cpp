@@ -104,7 +104,7 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
         transpositionValues->add_element(qValue);
         //MR
         transpositionNoveltyScores->add_element(noveltyScore);
-        info_string("//MR: transposition node! mit qValue = " + to_string(qValue) + " und noveltyScore = " + to_string(noveltyScore));
+        //info_string("//MR: transposition node! mit qValue = " + to_string(qValue) + " und noveltyScore = " + to_string(noveltyScore));
         nodeBackup = NODE_TRANSPOSITION;
         return newNode;
     }
@@ -169,7 +169,7 @@ Node* SearchThread::get_starting_node(Node* currentNode, NodeDescription& descri
 
 Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 {
-    info_string("//MR: get_new_child_to_evaluate() -> erstelle eine neue Trajektorie");
+    //info_string("//MR: get_new_child_to_evaluate() -> erstelle eine neue Trajektorie");
     description.depth = 0;
     Node* currentNode = rootNode;
     Node* nextNode;
@@ -194,18 +194,18 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
-            info_string("//MR: select_child_node(searchSettings)");
+            //info_string("//MR: select_child_node(searchSettings)");
             childIdx = currentNode->select_child_node(searchSettings);
-            info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx) + "\n");
+            //info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx) + "\n");
         }
-        info_string("//MR apply_virtual_loss_to_child()");
+        //info_string("//MR apply_virtual_loss_to_child()");
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings->virtualLoss);
         trajectoryBuffer.emplace_back(NodeAndIdx(currentNode, childIdx));
 
         nextNode = currentNode->get_child_node(childIdx);
         description.depth++;
         if (nextNode == nullptr) {
-            info_string("//MR: nextNode ist null -> fuege Knoten mit nullptr und initWerten hinzu ...");
+            //info_string("//MR: nextNode ist null -> fuege Knoten mit nullptr und initWerten hinzu ...");
 #ifdef MCTS_STORE_STATES
             StateObj* newState = currentNode->get_state()->clone();
 #else
@@ -220,7 +220,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 #ifdef MCTS_STORE_STATES
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
 #else
-            info_string("//MR: ... und haenge den Knoten an childIndex = " + to_string(childIdx) + " an den Baum (nullptr ersetzen durch Knoten)");
+            //info_string("//MR: ... und haenge den Knoten an childIndex = " + to_string(childIdx) + " an den Baum (nullptr ersetzen durch Knoten)");
             nextNode = add_new_node_to_tree(newState.get(), currentNode, childIdx, description.type);
 #endif
             currentNode->unlock();
@@ -247,19 +247,19 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             return nextNode;
         }
         if (nextNode->is_terminal()) {
-            info_string("//MR: nextNode->is_terminal()");
+            //info_string("//MR: nextNode->is_terminal()");
             description.type = NODE_TERMINAL;
             currentNode->unlock();
             return nextNode;
         }
         if (!nextNode->has_nn_results()) {
-            info_string("//MR: !nextNode->has_nn_results()");
+            //info_string("//MR: !nextNode->has_nn_results()");
             description.type = NODE_COLLISION;
             currentNode->unlock();
             return nextNode;
         }
         if (nextNode->is_transposition()) {
-            info_string("//MR: nextNode->is_transposition()");
+            //info_string("//MR: nextNode->is_transposition()");
             nextNode->lock();
             const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx);
             const double transposQValue = -currentNode->get_q_sum(childIdx, searchSettings->virtualLoss) / transposVisits;
@@ -308,7 +308,7 @@ void SearchThread::reset_stats()
 //MR add inputPlanes to params
 void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total)
 {
-    info_string("//MR: fill_nn_results(...) to newNode(s)");
+    //info_string("//MR: fill_nn_results(...) to newNode(s)");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
@@ -335,11 +335,11 @@ void SearchThread::set_nn_results_to_child_nodes()
 
 void SearchThread::backup_value_outputs()
 {
-    info_string("//MR: jetzt kommt backup_values fuer newTrajectories mit Size: " + to_string(newTrajectories.size()));
+    //info_string("//MR: jetzt kommt backup_values fuer newTrajectories mit Size: " + to_string(newTrajectories.size()));
     backup_values(*newNodes, newTrajectories);
     newNodeSideToMove->reset_idx();
     //MR add noveltyScore to params
-    info_string("//MR: jetzt kommt backup_values fuer transpositionTrajectories mit Size: " + to_string(transpositionTrajectories.size()));
+    //info_string("//MR: jetzt kommt backup_values fuer transpositionTrajectories mit Size: " + to_string(transpositionTrajectories.size()));
     backup_values(transpositionValues.get(), transpositionTrajectories, transpositionNoveltyScores.get());
 }
 
@@ -384,7 +384,7 @@ void SearchThread::create_mini_batch()
 
         trajectoryBuffer.clear();
         actionsBuffer.clear();
-        info_string("//MR: create_mini_batch() VOR get_new_child_to_evaluate(description)\n");
+        //info_string("//MR: create_mini_batch() VOR get_new_child_to_evaluate(description)\n");
         Node* newNode = get_new_child_to_evaluate(description);
         depthSum += description.depth;
         depthMax = max(depthMax, description.depth);
@@ -414,14 +414,14 @@ void SearchThread::thread_iteration()
     create_mini_batch();
 #ifndef SEARCH_UCT
     if (newNodes->size() != 0) {
-        info_string("//MR: PREDICT FOR NEWNODES!!! in thread_iteration()");
+        //info_string("//MR: PREDICT FOR NEWNODES!!! in thread_iteration()");
         net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
         set_nn_results_to_child_nodes();
     }
 #endif
-    info_string("//MR: \n\n ---------------> BACKPROP!!! in thread_iteration()");
+    //info_string("//MR: \n\n ---------------> BACKPROP!!! in thread_iteration()");
     backup_value_outputs();
-    info_string("//MR: \n jetzt werden die Kollisionen aufgehoben!");
+    //info_string("//MR: \n jetzt werden die Kollisionen aufgehoben!");
     backup_collisions();
 }
 
@@ -430,11 +430,11 @@ void run_search_thread(SearchThread *t)
     t->set_is_running(true);
     t->reset_stats();
     while(t->is_running() && t->nodes_limits_ok() && t->is_root_node_unsolved()) {
-        info_string("//MR: run_search_thread()");
+        //info_string("//MR: run_search_thread()");
         t->thread_iteration();
     }
     t->set_is_running(false);
-    info_string("//MR: ein thread ist fertig!!! run_search_thread()");
+    //info_string("//MR: ein thread ist fertig!!! run_search_thread()");
 }
 
 void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories) {
@@ -501,7 +501,7 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
         return;
     }
 #endif
-    info_string("//MR: newNode node_assign_value(...) mit value: " + to_string(valueOutputs[batchIdx]));
+    //info_string("//MR: newNode node_assign_value(...) mit value: " + to_string(valueOutputs[batchIdx]));
     node->set_value(valueOutputs[batchIdx]);
 }
 
@@ -528,7 +528,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            info_string("//MR: ohne Offset!! i = " + to_string(i) + " | chanel = " + to_string(chanel) + " | row = " + to_string(row) + " | col = " + to_string(col) + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
+            //info_string("//MR: ohne Offset!! i = " + to_string(i) + " | chanel = " + to_string(chanel) + " | row = " + to_string(row) + " | col = " + to_string(col) + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
             if (valueOutputs[batchIdx] > factPlanes[i]) {
                 factPlanes[i] = valueOutputs[batchIdx];
                 isNovel = true;
@@ -541,7 +541,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            info_string("//MR: chess mit Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col) + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));  
+            //info_string("//MR: chess mit Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col) + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));  
             if (valueOutputs[batchIdx] > factPlanes[i]) {
                 factPlanes[i] = valueOutputs[batchIdx];
                 isNovel = true;
@@ -549,9 +549,9 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
         }
     }
-    info_string("//MR: MODE_CHESS and MODE_CRAZYHOUSE!");
+    //info_string("//MR: MODE_CHESS and MODE_CRAZYHOUSE!");
 #ifdef MODE_CRAZYHOUSE
-    info_string("//MR: mode crazyhouse");
+    //info_string("//MR: mode crazyhouse");
     if (searchSettings->usePocketForNovelty) {
         // this loop covers the facts for the pocket pieces (planes with index 14 to 23)
         inputPlanesSize = 8 * 8 * 10;
@@ -561,7 +561,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             if (!searchSettings->useFactPlanesOffset && inputPlanes[i] > 0) {
                 index = i + batchIdx * numberInputTotal;
                 chanel = i / 64;
-                info_string("//MR: pocket kein Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
+                //info_string("//MR: pocket kein Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
                 if (valueOutputs[batchIdx] > factPlanes[i]) {
                     factPlanes[i] = valueOutputs[batchIdx];
                     isNovel = true;
@@ -573,7 +573,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             if (searchSettings->useFactPlanesOffset && inputPlanes[i + batchIdx * numberInputTotal] > 0) {
                 index = i + batchIdx * numberInputTotal;
                 chanel = i / 64;
-                info_string("//MR: pocket Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
+                //info_string("//MR: pocket Offset! idx=" + to_string(index) + "i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
                 if (valueOutputs[batchIdx] > factPlanes[i]) {
                     factPlanes[i] = valueOutputs[batchIdx];
                     isNovel = true;
@@ -586,10 +586,10 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
 #endif // MODE_CRAZYHOUSE
 
     if (isNovel) {
-        info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
+        //info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
         node->set_novelty_score((double) searchSettings->noveltyValue);
     }
-    info_string("//MR: newNode node_assign_novelty_score(): isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " and number of novel facts = " + to_string(numberOfNovelFacts));
+    //info_string("//MR: newNode node_assign_novelty_score(): isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " and number of novel facts = " + to_string(numberOfNovelFacts));
 }
 
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings)

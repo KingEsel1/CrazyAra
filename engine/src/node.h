@@ -195,17 +195,17 @@ public:
     {                                                                                       
         lock();                                                                             //MR
         // decrement virtual loss counter
-        info_string("//MR: revVLaU()");
+        //info_string("//MR: revVLaU()");
         update_virtual_loss_counter<false>(childIdx, virtualLoss); //MR wäre meiner Meinung nach schlauer das erst nach der Aktualisierung des NoveltyScores zu ton um leichter an die realVisits zu kommen!
 
         valueSum += value;
         ++realVisitsSum; //MR eventuell realVisitSum des Kindknoten benutzen statt d->childNumberVisits[childIdx] <- das ist dumm, da man dann eine neue Variable d->realchildNumberVisits erstellen muss... lieber berechnen
-        info_string("//MR: revVLaU(): realVisitSum des Elternknotens des zu updatenden = " + to_string(realVisitsSum));
+        //info_string("//MR: revVLaU(): realVisitSum des Elternknotens des zu updatenden = " + to_string(realVisitsSum));
 
-        info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]) + " virtualLoss = " + to_string(virtualLoss) + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
+        //info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]) + " virtualLoss = " + to_string(virtualLoss) + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
         
 
-        info_string("//MR: revVLaU(): noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]) + "mit neuem noveltyScore = " + to_string(noveltyScore));
+        //info_string("//MR: revVLaU(): noveltyScore vor Backprop = " + to_string(d->noveltyScores[childIdx]) + "mit neuem noveltyScore = " + to_string(noveltyScore));
 
         if (d->childNumberVisits[childIdx] == virtualLoss) { //MR BUG?: d->virtualLossCounter[childIdx] und update_virtual_loss_counter() unten!
             // set new Q-value based on return
@@ -213,7 +213,7 @@ public:
             d->qValues[childIdx] = value;
             //MR
             d->noveltyScores[childIdx] = noveltyScore;
-            info_string("//MR: revVLaU(): INIT: noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]) + " | qValue nach Backprop : " + to_string(d->qValues[childIdx]));
+            //info_string("//MR: revVLaU(): INIT: noveltyScore nach Backprop: " + to_string(d->noveltyScores[childIdx]) + " | qValue nach Backprop : " + to_string(d->qValues[childIdx]));
             
         }
         else {
@@ -227,10 +227,10 @@ public:
             //   deshalb d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss) = realVisits
             //   --> Das +virtualLoss muss dahin, weil d->virtualLossCounter[chIdx] oben schon dekrementiert wird...
             //MR ausserdem muss doch der Nenner (d->childNumberVisits[childIdx] + 1) sein -> Mittelwert...
-            info_string("//MR: revVLaU(): realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)));
+            //info_string("//MR: revVLaU(): realVisits for childIdx = " + to_string(d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)));
             //MR wenn dekrement erst unten, dann: d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx]) + noveltyScore) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1);
             d->noveltyScores[childIdx] = (double(d->noveltyScores[childIdx]) * (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss)) + noveltyScore) / (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] + virtualLoss) + 1);
-            info_string("//MR: revVLaU(): UPDATE: qValue nach Backprop: " + to_string(d->qValues[childIdx]) + " | noveltyScore nach Backprop : " + to_string(d->noveltyScores[childIdx]));
+            //info_string("//MR: revVLaU(): UPDATE: qValue nach Backprop: " + to_string(d->qValues[childIdx]) + " | noveltyScore nach Backprop : " + to_string(d->noveltyScores[childIdx]));
                
             assert(!isnan(d->noveltyScores[childIdx]));            
         }
@@ -508,12 +508,12 @@ public:
     {
         if (increment) {
             d->virtualLossCounter[childIdx] += virtualLoss;
-            info_string("//MR: update_virtual_loss_counter() inkrement: d->virtualLossCounter[childIdx] nach update = " + to_string(d->virtualLossCounter[childIdx]));
+            //info_string("//MR: update_virtual_loss_counter() inkrement: d->virtualLossCounter[childIdx] nach update = " + to_string(d->virtualLossCounter[childIdx]));
         }
         else {
             assert(d->virtualLossCounter[childIdx] != 0);
             d->virtualLossCounter[childIdx] -= virtualLoss;
-            info_string("//MR: update_virtual_loss_counter() dekrement: d->virtualLossCounter[childIdx] nach update = " + to_string(d->virtualLossCounter[childIdx]));
+            //info_string("//MR: update_virtual_loss_counter() dekrement: d->virtualLossCounter[childIdx] nach update = " + to_string(d->virtualLossCounter[childIdx]));
         }
     }
 
@@ -809,7 +809,7 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 template <bool freeBackup>
 void backup_value(float value, float virtualLoss, const Trajectory& trajectory, bool solveForTerminal, float noveltyScore) {
     double targetQValue = 0;                                                                           //MR
-    info_string("//MR: Die Trajektorie hat so viele Knoten nach dem Wurzelknoten " + to_string(trajectory.size()));
+    //info_string("//MR: Die Trajektorie hat so viele Knoten nach dem Wurzelknoten " + to_string(trajectory.size()));
     int i = trajectory.size() - 1; //MR am Ende Variable i entfernen, nur zu testzwecken!!
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
         if (targetQValue != 0) {
