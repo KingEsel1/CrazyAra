@@ -29,7 +29,7 @@
 
 void NodeData::add_empty_node()
 {
-    info_string("//MR: add_empty_node()");
+    //info_string("//MR: add_empty_node()");
     append(childNumberVisits, 0U);
     append(qValues, Q_INIT);
     //MR
