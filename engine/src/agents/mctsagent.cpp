@@ -365,11 +365,14 @@ void MCTSAgent::run_mcts_search()
 void MCTSAgent::stop()
 {
     runnerMutex.lock();
+    info_string("//MR: 4.1");
     if (!isRunning) {
+        info_string("//MR: 4.2");
         runnerMutex.unlock();
         return;
     }
     if (threadManager != nullptr) {
+        info_string("//MR: 4.3");
         threadManager->stop_search();
     }
     isRunning = false;
