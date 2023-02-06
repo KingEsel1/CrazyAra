@@ -590,7 +590,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     if (isNovel) {
         //info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
         node->set_novelty_score((double) searchSettings->noveltyValue);
-        info_string("//MR: numberOfNovelFacts=" + to_string(numberOfNovelFacts));
+        //info_string("//MR: numberOfNovelFacts=" + to_string(numberOfNovelFacts));
     }
     //info_string("//MR: newNode node_assign_novelty_score(): isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " and number of novel facts = " + to_string(numberOfNovelFacts));
 }
