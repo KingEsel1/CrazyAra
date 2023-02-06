@@ -83,8 +83,8 @@ const string engineAuthors = "Johannes Czech and CrazyAra developers (see AUTHOR
 #define NO_CHECKMATE 65535
 #define Q_VALUE_DIFF 0.1f
 #define Q_INIT -1.0f
-//MR
-#define NOVELTY_VALUE_INIT -1.0f
+//MR -> 0 oder -1.0f???
+#define NOVELTY_VALUE_INIT 0
 #define DEPTH_INIT 64
 #define Q_TRANSPOS_DIFF 0.01
 #define MAX_HASH_SIZE 100000000
