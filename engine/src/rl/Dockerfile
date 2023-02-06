@@ -126,7 +126,7 @@ RUN cd /root/CrazyAra/engine \
     && cd build
 RUN if [ "${FRAMEWORK}" = "pytorch" ]; then \
     cd /root/CrazyAra/engine/build \
-    && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBACKEND_TENSORRT=ON -DBACKEND_OPENVINO=OFF -DUSE_RL=OFF -DMODE_CRAZYHOUSE=0 -DMODE_CHESS=1 -DMODE_LICHESS=0 .. \
+    && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBACKEND_TENSORRT=ON -DBACKEND_OPENVINO=OFF -DUSE_RL=OFF -DMODE_CRAZYHOUSE=1 -DMODE_CHESS=0 -DMODE_LICHESS=0 .. \
     && make -j8 ; \
 else \
     cd /root/CrazyAra/engine/build \
