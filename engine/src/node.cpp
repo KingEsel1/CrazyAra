@@ -1113,6 +1113,9 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         if (noveltyWeights[i] > 1 || noveltyWeights[i] < -1) {
             info_string("//MR: illegal value for noveltyWeights[i]: " + to_string(noveltyWeights[i]) + " with d->childNumberVisits[i]: " + to_string(d->childNumberVisits[i]));
         }
+        if (d->noveltyScores[i] > searchSettings->noveltyValue) {
+            info_string("//MR: illegal value for noveltyValue: " + to_string(d->noveltyScores[i]));
+        }
         /*
         info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i])
             + " | noveltyWeights" + to_string(i) + " = " + to_string(noveltyWeights[i])
