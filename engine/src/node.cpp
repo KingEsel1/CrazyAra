@@ -1097,8 +1097,8 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // calculate the current noveltyWeights
     // it's not worth to save the noveltyWeights as a node attribute because they are updated every time n_sum changes
     //MR
-    DynamicVector<float> noveltyWeights(d->childNumberVisits.size());
-    //DynamicVector<float> noveltyWeights(d->childNumberVisits.size(), 0.0f);
+    //DynamicVector<float> noveltyWeights(d->childNumberVisits.size());
+    DynamicVector<float> noveltyWeights(d->childNumberVisits.size(), 0.0f);
     if (searchSettings->noveltyDecay != 0) {
         //MR reicht der double im Nenner, um sehr hohe NoveltyWeights zu vermeiden?
         noveltyWeights = sqrt(double(searchSettings->noveltyDecay) / (3 * d->childNumberVisits + double(searchSettings->noveltyDecay)));
