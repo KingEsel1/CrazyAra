@@ -106,10 +106,10 @@ void CrazyAra::uci_loop(int argc, char* argv[])
         //"setoption name Batch_Size value 1",
         //"setoption name Centi_Novelty_Decay value 50",
         //"setoption name Centi_Novelty_Value value 50",
-        "isready",
-        "position startpos moves e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 d2d3 d7d6 c2c3 g7g6 b1d2 f8g7 d2f1 c8d7 f1g3 d8e7 h2h3 h7h6 c1e3 d6d5 d1e2 d5d4 e3d2 f6h7 a1c1 h7g5 f3g5 h6g5 e2d1 h8h4 f2f3 d4c3 b2c3 f7f5 c1b1 b7b5 a4b3 g5g4 f3g4 f5g4 h1f1 g4h3 f1f7 h3g2 f7e7 c6e7 e1f2 d7g4 d1g1 e8d7 d2g5 h4h1 g3h1 g2h1q g1h1 a8f8 f2g3 g4h5 b1f1 f8f1 h1f1 d7e8 b3e6 g7f8 f1f7",
-        "go wtime 7178 btime 7282 winc 100 binc 100 nodes 100",
-        "quit",
+        ////"isready", ->//MR mit 4 //// ist für Fehlerreplikation Segmentation fault
+        ////"position startpos moves e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 d2d3 d7d6 c2c3 g7g6 b1d2 f8g7 d2f1 c8d7 f1g3 d8e7 h2h3 h7h6 c1e3 d6d5 d1e2 d5d4 e3d2 f6h7 a1c1 h7g5 f3g5 h6g5 e2d1 h8h4 f2f3 d4c3 b2c3 f7f5 c1b1 b7b5 a4b3 g5g4 f3g4 f5g4 h1f1 g4h3 f1f7 h3g2 f7e7 c6e7 e1f2 d7g4 d1g1 e8d7 d2g5 h4h1 g3h1 g2h1q g1h1 a8f8 f2g3 g4h5 b1f1 f8f1 h1f1 d7e8 b3e6 g7f8 f1f7",
+        ////"go wtime 7178 btime 7282 winc 100 binc 100 nodes 100",
+        ////"quit",
         //"go nodes 100",
     };
 
