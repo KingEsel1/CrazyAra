@@ -39,25 +39,25 @@ NeuralNetAPIUser::NeuralNetAPIUser(NeuralNetAPI *net):
 //MR #ifdef TENSORRT
 #ifdef FALSE
 #ifdef DYNAMIC_NN_ARCH
-    info_string("//MR: before CHECK(cudaMallocHost((void**) &inputPlanes, net->get_batch_size() * net->get_nb_input_values_total() * sizeof(float)))");
+    //info_string("//MR: before CHECK(cudaMallocHost((void**) &inputPlanes, net->get_batch_size() * net->get_nb_input_values_total() * sizeof(float)))");
     CHECK(cudaMallocHost((void**) &inputPlanes, net->get_batch_size() * net->get_nb_input_values_total() * sizeof(float)));
 #else
      CHECK(cudaMallocHost((void**) &inputPlanes, net->get_batch_size() * StateConstants::NB_VALUES_TOTAL() * sizeof(float)));
 #endif
-     info_string("//MR: before CHECK(cudaMallocHost((void**) &valueOutputs, net->get_batch_size() * sizeof(float)))");
+    //info_string("//MR: before CHECK(cudaMallocHost((void**) &valueOutputs, net->get_batch_size() * sizeof(float)))");
     CHECK(cudaMallocHost((void**) &valueOutputs, net->get_batch_size() * sizeof(float)));
     CHECK(cudaMallocHost((void**) &probOutputs, net->get_batch_size() * net->get_nb_policy_values() * sizeof(float)));
     if (net->has_auxiliary_outputs()) {
         CHECK(cudaMallocHost((void**) &auxiliaryOutputs, net->get_batch_size() * net->get_nb_auxiliary_outputs() * sizeof(float)));
     }
 #else
-    info_string("//MR: before inputPlanes = new float[net->get_batch_size() * net->get_nb_input_values_total()]");
+    //info_string("//MR: before inputPlanes = new float[net->get_batch_size() * net->get_nb_input_values_total()]");
     inputPlanes = new float[net->get_batch_size() * net->get_nb_input_values_total()];
-    info_string("//MR: before valueOutputs = new float[net->get_batch_size()]");
+    //info_string("//MR: before valueOutputs = new float[net->get_batch_size()]");
     valueOutputs = new float[net->get_batch_size()];
-    info_string("//MR: before probOutputs = new float[net->get_batch_size() * net->get_nb_policy_values()]");
+    //info_string("//MR: before probOutputs = new float[net->get_batch_size() * net->get_nb_policy_values()]");
     probOutputs = new float[net->get_batch_size() * net->get_nb_policy_values()];
-    info_string("//MR: after probOutputs = new float[net->get_batch_size() * net->get_nb_policy_values()]");
+    //info_string("//MR: after probOutputs = new float[net->get_batch_size() * net->get_nb_policy_values()]");
 #ifdef DYNAMIC_NN_ARCH
     if (net->has_auxiliary_outputs()) {
         auxiliaryOutputs = new float[net->get_batch_size() * net->get_nb_auxiliary_outputs()];
@@ -74,28 +74,28 @@ NeuralNetAPIUser::~NeuralNetAPIUser()
 {
 //MR #ifdef TENSORRT
 #ifdef FALSE
-    info_string("//MR: free inputPlanes");
+    //info_string("//MR: free inputPlanes");
     CHECK(cudaFreeHost(inputPlanes));
-    info_string("//MR: free valueOutputs");
+    //info_string("//MR: free valueOutputs");
     CHECK(cudaFreeHost(valueOutputs));
-    info_string("//MR: free propOutputs");
+    //info_string("//MR: free propOutputs");
     CHECK(cudaFreeHost(probOutputs));
 #ifdef DYNAMIC_NN_ARCH
     if (net->has_auxiliary_outputs()) {
 #else
     if (StateConstants::NB_AUXILIARY_OUTPUTS()) {
 #endif
-        info_string("//MR: free auxOutputs");
+        //info_string("//MR: free auxOutputs");
         CHECK(cudaFreeHost(auxiliaryOutputs));
     }
 #else
-    info_string("//MR: before delete [] inputPlanes");
+    //info_string("//MR: before delete [] inputPlanes");
     delete [] inputPlanes;
-    info_string("//MR: before delete [] valueOutputs");
+    //info_string("//MR: before delete [] valueOutputs");
     delete [] valueOutputs;
-    info_string("//MR: before delete [] probOutputs");
+    //info_string("//MR: before delete [] probOutputs");
     delete [] probOutputs;
-    info_string("//MR: after delete [] probOutputs");
+    //info_string("//MR: after delete [] probOutputs");
 #ifdef DYNAMIC_NN_ARCH
     if (net->has_auxiliary_outputs()) {
 #else
