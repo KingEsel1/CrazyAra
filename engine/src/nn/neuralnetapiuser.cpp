@@ -66,14 +66,18 @@ NeuralNetAPIUser::NeuralNetAPIUser(NeuralNetAPI *net):
 NeuralNetAPIUser::~NeuralNetAPIUser()
 {
 #ifdef TENSORRT
+    info_string("//MR: free inputPlanes");
     CHECK(cudaFreeHost(inputPlanes));
+    info_string("//MR: free valueOutputs");
     CHECK(cudaFreeHost(valueOutputs));
+    info_string("//MR: free propOutputs");
     CHECK(cudaFreeHost(probOutputs));
 #ifdef DYNAMIC_NN_ARCH
     if (net->has_auxiliary_outputs()) {
 #else
     if (StateConstants::NB_AUXILIARY_OUTPUTS()) {
 #endif
+        info_string("//MR: free auxOutputs");
         CHECK(cudaFreeHost(auxiliaryOutputs));
     }
 #else
