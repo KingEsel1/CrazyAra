@@ -235,11 +235,11 @@ void CrazyAra::wait_to_finish_last_search()
 void CrazyAra::stop_search()
 {
     if (mctsAgent != nullptr) {
-        //info_string("//MR: in stop_search() and mctsAgent not nullptr. Before mctsAgent->stop()");
+        info_string("//MR: in stop_search() and mctsAgent not nullptr. Before mctsAgent->stop()");
         mctsAgent->stop();
-        //info_string("//MR: After mctsAgent->stop() and before wait_to_finish_last_search()");
+        info_string("//MR: After mctsAgent->stop() and before wait_to_finish_last_search()");
         wait_to_finish_last_search();
-        //info_string("//MR: After  wait_to_finish_last_search()");
+        info_string("//MR: After  wait_to_finish_last_search()");
     }
 }
 
