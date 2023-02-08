@@ -467,13 +467,13 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
-    info_string("//MR: d->qValues[childIdx] vor VL = " + to_string(d->qValues[childIdx]));
+    //info_string("//MR: d->qValues[childIdx] vor VL = " + to_string(d->qValues[childIdx]));
     d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
-    info_string("//MR: d->qValues[childIdx] nach VL = " + to_string(d->qValues[childIdx]));
+    //info_string("//MR: d->qValues[childIdx] nach VL = " + to_string(d->qValues[childIdx]));
     // virtual increase the number of visits
-    info_string("//MR: d->childNumberVisits[childIdx] vor VL = " + to_string(d->childNumberVisits[childIdx]));
+    //info_string("//MR: d->childNumberVisits[childIdx] vor VL = " + to_string(d->childNumberVisits[childIdx]));
     d->childNumberVisits[childIdx] += virtualLoss;
-    info_string("//MR: d->childNumberVisits[childIdx] nach VL = " + to_string(d->childNumberVisits[childIdx]));
+    //info_string("//MR: d->childNumberVisits[childIdx] nach VL = " + to_string(d->childNumberVisits[childIdx]));
     d->visitSum += virtualLoss;
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, virtualLoss);
@@ -619,12 +619,12 @@ void backup_collision(float virtualLoss, const Trajectory& trajectory) {
 void Node::revert_virtual_loss(ChildIdx childIdx, float virtualLoss)
 {
     lock();
-    info_string("//MR: revVL(): d->qValues[childIdx] vor revert = " + to_string(d->qValues[childIdx]) + " mit childIdx = " + to_string(childIdx));
+    //info_string("//MR: revVL(): d->qValues[childIdx] vor revert = " + to_string(d->qValues[childIdx]) + " mit childIdx = " + to_string(childIdx));
     d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
-    info_string("//MR: revVL(): d->qValues[childIdx] nach revert = " + to_string(d->qValues[childIdx]));
-    info_string("//MR: revVL(): d->childNumberVisits[childIdx] vor revert = " + to_string(d->childNumberVisits[childIdx]));
+    //info_string("//MR: revVL(): d->qValues[childIdx] nach revert = " + to_string(d->qValues[childIdx]));
+    //info_string("//MR: revVL(): d->childNumberVisits[childIdx] vor revert = " + to_string(d->childNumberVisits[childIdx]));
     d->childNumberVisits[childIdx] -= virtualLoss;
-    info_string("//MR: revVL(): d->childNumberVisits[childIdx] nach revert = " + to_string(d->childNumberVisits[childIdx]));
+    //info_string("//MR: revVL(): d->childNumberVisits[childIdx] nach revert = " + to_string(d->childNumberVisits[childIdx]));
     d->visitSum -= virtualLoss;
     // decrement virtual loss counter
     update_virtual_loss_counter<false>(childIdx, virtualLoss);
@@ -1108,22 +1108,24 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
+    /*
     DynamicVector<float> uVal = get_current_u_values(searchSettings);
     for (int i = 0; i < d->childNumberVisits.size(); i++) {
         if (noveltyWeights[i] > 1 || noveltyWeights[i] < -1) {
-            info_string("//MR: illegal value for noveltyWeights[i]: " + to_string(noveltyWeights[i]) + " with d->childNumberVisits[i]: " + to_string(d->childNumberVisits[i]));
+            //info_string("//MR: illegal value for noveltyWeights[i]: " + to_string(noveltyWeights[i]) + " with d->childNumberVisits[i]: " + to_string(d->childNumberVisits[i]));
         }
         if (d->noveltyScores[i] > searchSettings->noveltyValue) {
-            info_string("//MR: illegal value for noveltyValue: " + to_string(d->noveltyScores[i]));
+            //info_string("//MR: illegal value for noveltyValue: " + to_string(d->noveltyScores[i]));
         }
  
-        info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i])
+        //info_string("//MR: d->childNumberVisits" + to_string(i) + " = " + to_string(d->childNumberVisits[i])
             + " | noveltyWeights" + to_string(i) + " = " + to_string(noveltyWeights[i])
             + " | d->noveltyScores" + to_string(i) + " = " + to_string(d->noveltyScores[i])
             + " | d->qValues" + to_string(i) + " = " + to_string(d->qValues[i])
             + " | uValues" + to_string(i) + " = " + to_string(uVal[i]));
 
     }
+    */
     //MR
     return argmax(noveltyWeights * d->noveltyScores + (1 - noveltyWeights) * d->qValues + get_current_u_values(searchSettings));
     //return argmax(d->qValues + get_current_u_values(searchSettings));
