@@ -214,8 +214,8 @@ void OptionsUCI::init(OptionsMap &o)
     o["Quick_Nodes"]                   << Option(100, 0, 99999);
 #endif
     //MR
-    o["Centi_Novelty_Decay"]           << Option(0, 0, 99999);
-    o["Centi_Novelty_Value"]           << Option(0, 0, 99999);
+    o["Milli_Novelty_Decay"]           << Option(0, 0, 999999999);
+    o["Milli_Novelty_Value"]           << Option(0, 0, 999999999);
     o["Use_Fact_Planes_Offset"]        << Option(true); //MR raus nach debug!!!
     o["Use_Pocket_For_Novelty"]        << Option(true); //MR raus nach debug!!!
 }

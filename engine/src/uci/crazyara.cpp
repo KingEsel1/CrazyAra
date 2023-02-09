@@ -127,7 +127,7 @@ void CrazyAra::uci_loop(int argc, char* argv[])
         is >> skipws >> token;
 
         if (token == "stop" || token == "quit") {
-            //info_string("//MR: before stop_search()");
+            info_string("//MR: before stop_search()");
             stop_search();
         }
         else if (token == "uci") {
@@ -235,11 +235,11 @@ void CrazyAra::wait_to_finish_last_search()
 void CrazyAra::stop_search()
 {
     if (mctsAgent != nullptr) {
-        //info_string("//MR: in stop_search() and mctsAgent not nullptr. Before mctsAgent->stop()");
+        info_string("//MR: in stop_search() and mctsAgent not nullptr. Before mctsAgent->stop()");
         mctsAgent->stop();
-        //info_string("//MR: After mctsAgent->stop() and before wait_to_finish_last_search()");
+        info_string("//MR: After mctsAgent->stop() and before wait_to_finish_last_search()");
         wait_to_finish_last_search();
-        //info_string("//MR: After  wait_to_finish_last_search()");
+        info_string("//MR: After  wait_to_finish_last_search()");
     }
 }
 
@@ -725,8 +725,8 @@ void CrazyAra::init_search_settings()
     searchSettings.reuseTree = Options["Reuse_Tree"];
     searchSettings.mctsSolver = Options["MCTS_Solver"];
     //MR
-    searchSettings.noveltyDecay = Options["Centi_Novelty_Decay"] / 100.0f;
-    searchSettings.noveltyValue = Options["Centi_Novelty_Value"] / 100.0f;
+    searchSettings.noveltyDecay = Options["Milli_Novelty_Decay"] / 1000.0f;
+    searchSettings.noveltyValue = Options["Milli_Novelty_Value"] / 1000.0f;
     searchSettings.useFactPlanesOffset = Options["Use_Fact_Planes_Offset"]; //MR raus nach debug!!
     searchSettings.usePocketForNovelty = Options["Use_Pocket_For_Novelty"]; //MR raus nach debug!!
 }
