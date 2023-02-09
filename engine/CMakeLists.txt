@@ -12,14 +12,14 @@ option(BACKEND_OPENVINO          "Build with OpenVino backend (CPU/GPU) support"
 option(BUILD_TESTS               "Build and run tests"  OFF)
 option(USE_DYNAMIC_NN_ARCH       "Build with dynamic neural network architektur support"  ON)
 # enable a single mode for different model input / outputs
-option(MODE_CRAZYHOUSE           "Build with crazyhouse only support"  ON) #//MR changed!
-option(MODE_CHESS                "Build with chess + chess960 only support"  OFF) #//MR changed!
+option(MODE_CRAZYHOUSE           "Build with crazyhouse only support"  OFF) #//MR changed!
+option(MODE_CHESS                "Build with chess + chess960 only support"  ON) #//MR changed!
 option(MODE_LICHESS              "Build with lichess variants support"  OFF)
 option(MODE_OPEN_SPIEL           "Build with open_spiel environment support"  OFF)
 option(MODE_BOARDGAMES           "Build with Fairy-Stockfish environment support for board games"   OFF)
 option(MODE_XIANGQI              "Build with xiangqi only support" OFF)
 option(MODE_STRATEGO             "Build Stratego with open_spiel environment support"  OFF)
-option(SEARCH_UCT                "Build with UCT instead of PUCT search"  OFF)
+option(SEARCH_UCT                "Build with UCT instead of PUCT search"  OFF) #//MR UCT
 option(MCTS_STORE_STATES         "Build search by storing the state objects in each node. Results in higher memory usage but faster CPU runtime."  OFF)
 
 add_definitions(-DIS_64BIT)
