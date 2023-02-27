@@ -36,8 +36,8 @@ NeuralNetAPIUser::NeuralNetAPIUser(NeuralNetAPI *net):
     auxiliaryOutputs(nullptr)
 {
     // allocate memory for all predictions and results
-#ifdef TENSORRT
-//MR #ifdef FALSE
+//MR #ifdef TENSORRT
+#ifdef FALSE
 #ifdef DYNAMIC_NN_ARCH
     //info_string("//MR: before CHECK(cudaMallocHost((void**) &inputPlanes, net->get_batch_size() * net->get_nb_input_values_total() * sizeof(float)))");
     CHECK(cudaMallocHost((void**) &inputPlanes, net->get_batch_size() * net->get_nb_input_values_total() * sizeof(float)));
@@ -72,8 +72,8 @@ NeuralNetAPIUser::NeuralNetAPIUser(NeuralNetAPI *net):
 
 NeuralNetAPIUser::~NeuralNetAPIUser()
 {
-#ifdef TENSORRT
-//MR #ifdef FALSE
+//MR #ifdef TENSORRT
+#ifdef FALSE
     //info_string("//MR: free inputPlanes");
     CHECK(cudaFreeHost(inputPlanes));
     //info_string("//MR: free valueOutputs");
@@ -89,13 +89,13 @@ NeuralNetAPIUser::~NeuralNetAPIUser()
         CHECK(cudaFreeHost(auxiliaryOutputs));
     }
 #else
-    //info_string("//MR: before delete [] inputPlanes");
+    info_string("//MR: before delete [] inputPlanes");
     delete [] inputPlanes;
-    //info_string("//MR: before delete [] valueOutputs");
+    info_string("//MR: before delete [] valueOutputs");
     delete [] valueOutputs;
-    //info_string("//MR: before delete [] probOutputs");
-    delete [] probOutputs;
-    //info_string("//MR: after delete [] probOutputs");
+    info_string("//MR: before delete [] probOutputs");
+    //delete [] probOutputs;
+    info_string("//MR: after delete [] probOutputs");
 #ifdef DYNAMIC_NN_ARCH
     if (net->has_auxiliary_outputs()) {
 #else
