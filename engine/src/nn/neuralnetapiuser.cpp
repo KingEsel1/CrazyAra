@@ -90,9 +90,9 @@ NeuralNetAPIUser::~NeuralNetAPIUser()
     }
 #else
     info_string("//MR: before delete [] inputPlanes");
-    delete [] inputPlanes;
+    //delete [] inputPlanes;
     info_string("//MR: before delete [] valueOutputs");
-    delete [] valueOutputs;
+    //delete [] valueOutputs;
     info_string("//MR: before delete [] probOutputs");
     //delete [] probOutputs;
     info_string("//MR: after delete [] probOutputs");
