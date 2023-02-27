@@ -60,13 +60,10 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     //MR
     //info_string("//MR: mctsagent -> before factPlanes init!");
     int dimFactPlanes = 1408; //MR = 8 * 8 * 12 (board pieces) + 8 * 8 * 10 (pocket pieces)
-    info_string("//MR: factPlanes init 1");
     factPlanes = new float[dimFactPlanes];
-    info_string("//MR: factPlanes init 2");
     for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
         factPlanes[i] = -1.0f;
     }
-    info_string("//MR: factPlanes init 3");
     //info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
 }
 
@@ -368,18 +365,19 @@ void MCTSAgent::run_mcts_search()
 void MCTSAgent::stop()
 {
     runnerMutex.lock();
-    //info_string("//MR: 4.1");
+    info_string("//MR: 4.1");
     if (!isRunning) {
-        //info_string("//MR: 4.2");
+        info_string("//MR: 4.2");
         runnerMutex.unlock();
         return;
     }
     if (threadManager != nullptr) {
-        //info_string("//MR: 4.3");
+        info_string("//MR: 4.3");
         threadManager->stop_search();
     }
     isRunning = false;
     runnerMutex.unlock();
+    info_string("//MR: 4.4");
 }
 
 void MCTSAgent::print_root_node()

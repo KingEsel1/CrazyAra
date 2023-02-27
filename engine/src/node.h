@@ -196,10 +196,10 @@ public:
         lock();                                                                             //MR
         // decrement virtual loss counter
         //info_string("//MR: revVLaU()");
-        update_virtual_loss_counter<false>(childIdx, virtualLoss); //MR wäre meiner Meinung nach schlauer das erst nach der Aktualisierung des NoveltyScores zu ton um leichter an die realVisits zu kommen!
+        update_virtual_loss_counter<false>(childIdx, virtualLoss); //MR wäre meiner Meinung nach schlauer das erst nach der Aktualisierung des NoveltyScores zu tun um leichter an die realVisits zu kommen!
 
         valueSum += value;
-        ++realVisitsSum; //MR eventuell realVisitSum des Kindknoten benutzen statt d->childNumberVisits[childIdx] <- das ist dumm, da man dann eine neue Variable d->realchildNumberVisits erstellen muss... lieber berechnen
+        ++realVisitsSum;
         //info_string("//MR: revVLaU(): realVisitSum des Elternknotens des zu updatenden = " + to_string(realVisitsSum));
 
         //info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]) + " virtualLoss = " + to_string(virtualLoss) + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
