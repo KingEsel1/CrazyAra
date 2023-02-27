@@ -727,8 +727,7 @@ void CrazyAra::init_search_settings()
     //MR
     searchSettings.noveltyDecay = Options["Milli_Novelty_Decay"] / 1000.0f;
     searchSettings.noveltyValue = Options["Milli_Novelty_Value"] / 1000.0f;
-    searchSettings.useFactPlanesOffset = Options["Use_Fact_Planes_Offset"]; //MR raus nach debug!!
-    searchSettings.usePocketForNovelty = Options["Use_Pocket_For_Novelty"]; //MR raus nach debug!!
+    searchSettings.usePocketForNovelty = Options["Use_Pocket_For_Novelty"]; //MR
 }
 
 void CrazyAra::init_play_settings()

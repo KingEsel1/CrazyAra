@@ -59,7 +59,7 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     generator = default_random_engine(r());
     //MR
     //info_string("//MR: mctsagent -> before factPlanes init!");
-    int dimFactPlanes = 768; //MR calculate inputDims somehow
+    int dimFactPlanes = 1408; //MR = 8 * 8 * 12 (board pieces) + 8 * 8 * 10 (pocket pieces)
     factPlanes = new float[dimFactPlanes];
     for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
         factPlanes[i] = -1.0f;

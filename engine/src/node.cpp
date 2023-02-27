@@ -685,12 +685,12 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
         if (it != mapWithMutex->hashTable.end()) {
             shared_ptr<Node> transpositionNode = it->second.lock();
             Node* tranpositionNode = get_child_node(childIdx);
-            if (tranpositionNode != nullptr) {
+            if (tranpositionNode != nullptr) { //MR wenn der als nächstes ausgewählte Zustand (hier transpositionNode) nicht nullptr ist, heißt es, dass er schon aus einem anderen Pfad besucht wurde!!
                 if(is_transposition_verified(tranpositionNode, newState)) {
                     d->childNodes[childIdx] = atomic_load(&transpositionNode);
                     mapWithMutex->mtx.unlock();
                     tranpositionNode->lock();
-                    tranpositionNode->add_transposition_parent_node();
+                    tranpositionNode->add_transposition_parent_node(); //MR füge weiteren Elternknoten hinzu
                     tranpositionNode->unlock();
     #ifndef MCTS_SINGLE_PLAYER
                     if (tranpositionNode->is_playout_node() && tranpositionNode->get_node_type() == LOSS) {
@@ -705,7 +705,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
         mapWithMutex->mtx.unlock();
     }
 
-    // connect the Node to the parent
+    // connect the Node to the parent   //MR wenn dieser Zustand zum ersten Mal gefunden wird, dann passiert das gleiche wie bei MCTS
     shared_ptr<Node> newNode = make_shared<Node>(newState, searchSettings);
     atomic_store(&d->childNodes[childIdx], newNode);
     if (searchSettings->useMCGS) {

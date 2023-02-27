@@ -96,11 +96,12 @@ void SearchThread::set_fact_planes(float* value)
 Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, ChildIdx childIdx, NodeBackup& nodeBackup)
 {
     bool transposition;
+    //MR in folgender Zeile muss ich nichts aendern, das ist unabhaengig vom value.
     Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
     if (transposition) {
-        const float qValue =  parentNode->get_child_node(childIdx)->get_value();
+        const float qValue = parentNode->get_child_node(childIdx)->get_value(); //MR wenn in MCGS transpoNode, dann gab es fuer den Kindknoten schon eine NN Evaluation
         //MR
-        const float noveltyScore = parentNode->get_child_node(childIdx)->get_novelty_score();
+        const float noveltyScore = parentNode->get_child_node(childIdx)->get_novelty_score(); //MR so sähr die naive Implementation aus...
         transpositionValues->add_element(qValue);
         //MR
         transpositionNoveltyScores->add_element(noveltyScore);
@@ -244,6 +245,14 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 newNodeSideToMove->add_element(newState->side_to_move());
 #endif
             }
+            //MR update NoveltyScore of node with new parent (MCGS only)
+            /*
+            if (description.type == NODE_TRANSPOSITION) {
+                newState->get_state_planes(true, currentInputPlanes, ??); //MR übrarbeiten!! warum steht für den dritten Parameter oben "net->get_version()" obwohl "size" in der Beschreibung steht?
+                const float* qValue = new float[1] {currentNode->get_child_node(childIdx)->get_value()}; //MR qValue of the transpoNode
+                node_assign_novelty_score(nextNode, qValue, 0, searchSettings, currentInputPlanes, factPlanes, net->get_nb_input_values_total());
+            }
+            */
             return nextNode;
         }
         if (nextNode->is_terminal()) {
@@ -258,17 +267,15 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             currentNode->unlock();
             return nextNode;
         }
-        if (nextNode->is_transposition()) { //MR hier geht er nur rein, wenn MCGS aktiv ist??!!
+        if (nextNode->is_transposition()) { //MR hier geht er nur rein, wenn in der Trajektorienerstellung ein Knoten mit 2+ parents gefunden wird, der schon evaluiert wurde
             //info_string("//MR: nextNode->is_transposition()");
             nextNode->lock();
             const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx);
             const double transposQValue = -currentNode->get_q_sum(childIdx, searchSettings->virtualLoss) / transposVisits;
 
-            if (nextNode->is_transposition_return(transposQValue)) {
+            if (nextNode->is_transposition_return(transposQValue)) { //MR Wenn der reale QValue != QValue(inkl. VL) für den transpoNode ist! 
                 const float qValue = get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value());
-                //MR Der NoveltyScore muss nicht wie die qValues gecheckt werden, da kein virtualLoss angewendet wird... kann einfach übernommen werden
-                //MR aber nochmal fragen! -> mit dem check ist die Funktion  get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value()) gemeint
-                const float noveltyScore = nextNode->get_novelty_score(); ///MR: Hier muss die Berechnung des neuen novScores hin!!!!!!! -> erst bei MCGS
+                const float noveltyScore = nextNode->get_novelty_score(); //MR so sähr die naive Implementation aus...
                 //info_string("//MR: transpoNode bekommt novScore: " + to_string(noveltyScore) + " und qValue: " + to_string(qValue));
                 nextNode->unlock();
                 description.type = NODE_TRANSPOSITION;
@@ -278,7 +285,6 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 currentNode->unlock();
                 return nextNode;
             }
-            //info_string("//MR: Wann landet man hier? get_new_child_to_eval() nach transpo Check");
             nextNode->unlock();
         }
         currentNode->unlock();
@@ -518,32 +524,20 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     int chanel = 0;
     int index = 0;
 
-    //MR Die factPlanes fehlen hier noch, in denen die neuen Values gespeichert werden!!! siehe python Version
-
-    // 8 * 8 = 64 squares * 12 piecetypes
-    size_t inputPlanesSize = 8 * 8 * 12; //MR ist das evlt nbNNInputValues? net->get_nb_input_values_total() siehe get_child_node_to_evaluate()
-    // ckeck if the value of the current state is greater than any score of a fact that is active at the moment
-    // this loop covers all facts on the board (first 12 planes of input representation)
-    for (int i = 0; i < inputPlanesSize; i++)
+    //MR 8 * 8 = 64 squares * 12 piecetypes
+    size_t inputPlanesSizeBoard = 8 * 8 * 12;
+ 
+    //MR this loop covers all facts on the board (first 12 planes of inputPlanes)
+    for (int i = 0; i < inputPlanesSizeBoard; i++)
     {
-        if (!searchSettings->useFactPlanesOffset && inputPlanes[i] > 0) { //MR Ohne Offset -> eigenlich falsch, aber gute Ergebnisse!??
-            chanel = i / 64;
-            col = (i % 64) % 8;
-            row = (i % 64) / 8;
-            //info_string("//MR: ohne Offset!! i = " + to_string(i) + " | chanel = " + to_string(chanel) + " | row = " + to_string(row) + " | col = " + to_string(col) + " und valueOutputs[batchIdx] = " + to_string(valueOutputs[batchIdx]) + " und factPlanes[i] = " + to_string(factPlanes[i]));
-            if (valueOutputs[batchIdx] > factPlanes[i]) {
-                factPlanes[i] = valueOutputs[batchIdx];
-                isNovel = true;
-                numberOfNovelFacts++; //MR raus nach debug!
-            }
-        }     
-
-        if (searchSettings->useFactPlanesOffset && inputPlanes[i + batchIdx * numberInputTotal] > 0) { //MR HIER MUSS DER SHIFT HIN MIT bathIdx!!!!!!
+        if (inputPlanes[i + batchIdx * numberInputTotal] > 0) {
             index = i + batchIdx * numberInputTotal;
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            //info_string("//MR: chess mit Offset! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col) + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));  
+            //info_string("//MR: board! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col) + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));  
+            
+            //MR ckeck if the value of the newly evaluated state is greater than any score of a fact that is active in that state
             if (valueOutputs[batchIdx] > factPlanes[i]) {
                 factPlanes[i] = valueOutputs[batchIdx];
                 isNovel = true;
@@ -551,31 +545,20 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
         }
     }
-    //info_string("//MR: MODE_CHESS and MODE_CRAZYHOUSE!");
-#ifdef MODE_CRAZYHOUSE
-    //info_string("//MR: mode crazyhouse");
-    if (searchSettings->usePocketForNovelty) {
-        // this loop covers the facts for the pocket pieces (planes with index 14 to 23)
-        inputPlanesSize = 8 * 8 * 10;
-        int offsetForPocketPieces = 8 * 8 * 14; // first 14 planes -> see ppt pdf
-        for (int i = offsetForPocketPieces; i < inputPlanesSize + offsetForPocketPieces; i++)
-        {
-            if (!searchSettings->useFactPlanesOffset && inputPlanes[i] > 0) {
-                index = i + batchIdx * numberInputTotal;
-                chanel = i / 64;
-                //info_string("//MR: pocket kein Offset! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
-                if (valueOutputs[batchIdx] > factPlanes[i]) {
-                    factPlanes[i] = valueOutputs[batchIdx];
-                    isNovel = true;
-                    numberOfNovelFacts++; //MR raus nach debug!
-                    numberOfNovelPocketPieces++; //MR raus nach debug!
-                }
-            }
 
-            if (searchSettings->useFactPlanesOffset && inputPlanes[i + batchIdx * numberInputTotal] > 0) {
+#ifdef MODE_CRAZYHOUSE
+    if (searchSettings->usePocketForNovelty) {
+        //MR this loop covers the facts for the pocket pieces (planes with index 14 to 23 of inputPlanes)
+        size_t inputPlanesSizePocket = 8 * 8 * 10;
+        int offsetForPocketPieces = 8 * 8 * 14;
+        int i_factPlanes; //MR this variable is used for the indices in the factPlanes. Since the indices of the pocket pieces in the inputPlanes is different than in the factPlanes this is necessary
+        for (int i = offsetForPocketPieces; i < offsetForPocketPieces + inputPlanesSizePocket; i++)
+        {
+            if (inputPlanes[i + batchIdx * numberInputTotal] > 0) {
                 index = i + batchIdx * numberInputTotal;
                 chanel = i / 64;
-                //info_string("//MR: pocket Offset! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
+                //info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
+                i_factPlanes = i - 128; //MR shifts back two planes (see documentation)
                 if (valueOutputs[batchIdx] > factPlanes[i]) {
                     factPlanes[i] = valueOutputs[batchIdx];
                     isNovel = true;
@@ -585,7 +568,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
         }
     }
-#endif // MODE_CRAZYHOUSE
+#endif
 
     if (isNovel) {
         //info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
