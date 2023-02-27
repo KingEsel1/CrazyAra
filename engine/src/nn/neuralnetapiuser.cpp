@@ -101,7 +101,7 @@ NeuralNetAPIUser::~NeuralNetAPIUser()
 #else
     if (StateConstants::NB_AUXILIARY_OUTPUTS()) {
 #endif
-        delete [] auxiliaryOutputs;
+        //delete [] auxiliaryOutputs;
     }
 #endif
 }
