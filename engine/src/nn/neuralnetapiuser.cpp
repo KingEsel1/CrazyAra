@@ -36,8 +36,8 @@ NeuralNetAPIUser::NeuralNetAPIUser(NeuralNetAPI *net):
     auxiliaryOutputs(nullptr)
 {
     // allocate memory for all predictions and results
-//MR #ifdef TENSORRT
-#ifdef FALSE
+#ifdef TENSORRT
+//MR #ifdef FALSE
 #ifdef DYNAMIC_NN_ARCH
     //info_string("//MR: before CHECK(cudaMallocHost((void**) &inputPlanes, net->get_batch_size() * net->get_nb_input_values_total() * sizeof(float)))");
     CHECK(cudaMallocHost((void**) &inputPlanes, net->get_batch_size() * net->get_nb_input_values_total() * sizeof(float)));
@@ -72,8 +72,8 @@ NeuralNetAPIUser::NeuralNetAPIUser(NeuralNetAPI *net):
 
 NeuralNetAPIUser::~NeuralNetAPIUser()
 {
-//MR #ifdef TENSORRT
-#ifdef FALSE
+#ifdef TENSORRT
+//MR #ifdef FALSE
     //info_string("//MR: free inputPlanes");
     CHECK(cudaFreeHost(inputPlanes));
     //info_string("//MR: free valueOutputs");
