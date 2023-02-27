@@ -89,19 +89,19 @@ NeuralNetAPIUser::~NeuralNetAPIUser()
         CHECK(cudaFreeHost(auxiliaryOutputs));
     }
 #else
-    info_string("//MR: before delete [] inputPlanes");
-    //delete [] inputPlanes;
-    info_string("//MR: before delete [] valueOutputs");
-    //delete [] valueOutputs;
-    info_string("//MR: before delete [] probOutputs");
-    //delete [] probOutputs;
-    info_string("//MR: after delete [] probOutputs");
+    //info_string("//MR: before delete [] inputPlanes");
+    delete [] inputPlanes;
+    //info_string("//MR: before delete [] valueOutputs");
+    delete [] valueOutputs;
+    //info_string("//MR: before delete [] probOutputs");
+    delete [] probOutputs;
+    //info_string("//MR: after delete [] probOutputs");
 #ifdef DYNAMIC_NN_ARCH
     if (net->has_auxiliary_outputs()) {
 #else
     if (StateConstants::NB_AUXILIARY_OUTPUTS()) {
 #endif
-        //delete [] auxiliaryOutputs;
+        delete [] auxiliaryOutputs;
     }
 #endif
 }
