@@ -195,18 +195,18 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
-            info_string("//MR: select_child_node(searchSettings)");
+            //info_string("//MR: select_child_node(searchSettings)");
             childIdx = currentNode->select_child_node(searchSettings);
-            info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx) + "\n");
+            //info_string("//MR: childIdx aus select_child_node(searchSettings) ist " + to_string(childIdx) + "\n");
         }
-        info_string("//MR apply_virtual_loss_to_child()");
+        //info_string("//MR apply_virtual_loss_to_child()");
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings->virtualLoss);
         trajectoryBuffer.emplace_back(NodeAndIdx(currentNode, childIdx));
 
         nextNode = currentNode->get_child_node(childIdx);
         description.depth++;
         if (nextNode == nullptr) {
-            info_string("//MR: nextNode ist null -> fuege Knoten mit nullptr und initWerten hinzu ...");
+            //info_string("//MR: nextNode ist null -> fuege Knoten mit nullptr und initWerten hinzu ...");
 #ifdef MCTS_STORE_STATES
             StateObj* newState = currentNode->get_state()->clone();
 #else
@@ -221,7 +221,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 #ifdef MCTS_STORE_STATES
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
 #else
-            info_string("//MR: ... und haenge den Knoten an childIndex = " + to_string(childIdx) + " an den Baum (nullptr ersetzen durch Knoten)");
+            //info_string("//MR: ... und haenge den Knoten an childIndex = " + to_string(childIdx) + " an den Baum (nullptr ersetzen durch Knoten)");
             nextNode = add_new_node_to_tree(newState.get(), currentNode, childIdx, description.type);
 #endif
             currentNode->unlock();
@@ -316,7 +316,7 @@ void SearchThread::reset_stats()
 //MR add inputPlanes to params
 void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total)
 {
-    info_string("//MR: fill_nn_results(...) to newNodes");
+    //info_string("//MR: fill_nn_results(...) to newNodes");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
@@ -422,12 +422,12 @@ void SearchThread::thread_iteration()
     create_mini_batch();
 #ifndef SEARCH_UCT
     if (newNodes->size() != 0) {
-        info_string("//MR: PREDICT FOR NEWNODES!!! in thread_iteration()");
+        //info_string("//MR: PREDICT FOR NEWNODES!!! in thread_iteration()");
         net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
         set_nn_results_to_child_nodes();
     }
 #endif
-    info_string("//MR: \n\n ---------------> BACKPROP!!! in thread_iteration()");
+    //info_string("//MR: \n\n ---------------> BACKPROP!!! in thread_iteration()");
     backup_value_outputs();
     //info_string("//MR: \n jetzt werden die Kollisionen aufgehoben!");
     backup_collisions();
@@ -555,9 +555,10 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
         for (int i = offsetForPocketPieces; i < offsetForPocketPieces + inputPlanesSizePocket; i++)
         {
             if (inputPlanes[i + batchIdx * numberInputTotal] > 0) {
+                info_string("//MR: inputPlanes[i + batchIdx * numberInputTotal] = " + to_string(inputPlanes[i + batchIdx * numberInputTotal]));
                 index = i + batchIdx * numberInputTotal;
                 chanel = i / 64;
-                //info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
+                info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
                 i_factPlanes = i - 128; //MR shifts back two planes (see documentation)
                 if (valueOutputs[batchIdx] > factPlanes[i]) {
                     factPlanes[i] = valueOutputs[batchIdx];
@@ -575,7 +576,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
         node->set_novelty_score((double) searchSettings->noveltyValue);
         //info_string("//MR: numberOfNovelFacts=" + to_string(numberOfNovelFacts));
     }
-    info_string("//MR: isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " , number of novel facts = " + to_string(numberOfNovelFacts) + " , numberOfNovelFacts = " + to_string(numberOfNovelPocketPieces++));
+    info_string("//MR: --------------------------->>>>> isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " , number of novel facts = " + to_string(numberOfNovelFacts) + " , numberOfNovelPocketPieces = " + to_string(numberOfNovelPocketPieces++));
 }
 
 void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings)
