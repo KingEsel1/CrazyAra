@@ -560,8 +560,8 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
                 index = i + batchIdx * numberInputTotal;
                 chanel = i / 64;
                 numberPocketPieces = inputPlanes[i + batchIdx * numberInputTotal] / 0.03125; //MR 0.03125 is the value if one piece of a type is in the pocket
-                idxOnfactPlane = i - 128 + numberPocketPieces; //MR shifts back two planes (see documentation of input representation) and to the index of the field that contains the noveltyScore for numberPocketPieces
-                info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | idxOnFactPlane=" + to_string(idxOnfactPlane)  + " | factPlanes[idxOnfactPlane]=" + to_string(factPlanes[idxOnfactPlane]) + " | inpPl[idx]=" + to_string(inputPlanes[i + batchIdx * numberInputTotal]) + " | numberPocketPieces=" + to_string(numberPocketPieces));
+                idxOnfactPlane = i - 128 + numberPocketPieces - 1; //MR shifts back two planes (see documentation of input representation) and to the index of the field that contains the noveltyScore for numberPocketPieces (-1 because numberPocketPieces is not a index!!)
+                info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | bIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | idxOnFactPlane=" + to_string(idxOnfactPlane)  + " | factPlanes[idxOnfactPlane]=" + to_string(factPlanes[idxOnfactPlane]) + " | inpPl[idx]=" + to_string(inputPlanes[i + batchIdx * numberInputTotal]) + " | numbPockPieces=" + to_string(numberPocketPieces));
                 if (valueOutputs[batchIdx] > factPlanes[idxOnfactPlane]) {
                     factPlanes[idxOnfactPlane] = valueOutputs[batchIdx];
                     isNovel = true;
