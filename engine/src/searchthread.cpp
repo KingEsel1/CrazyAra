@@ -551,21 +551,19 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
         //MR this loop covers the facts for the pocket pieces (planes with index 14 to 23 of inputPlanes)
         size_t inputPlanesSizePocket = 8 * 8 * 10;
         int offsetForPocketPieces = 8 * 8 * 14;
-        int i_factPlanes; //MR this variable is used for the indices in the factPlanes. Since the indices of the pocket pieces in the inputPlanes is different than in the factPlanes this is necessary
-        bool print = true;
-        for (int i = offsetForPocketPieces; i < offsetForPocketPieces + inputPlanesSizePocket; i++)
+        int idxOnfactPlane; //MR this variable is used for the indices in the factPlanes. Since the indices of the pocket pieces in the inputPlanes is different than in the factPlanes this is necessary
+        int numberPocketPieces; //MR defines the number of pieces of a piecetype in a pocket
+        for (int i = offsetForPocketPieces; i < offsetForPocketPieces + inputPlanesSizePocket; i = i + 64) //MR shift i by 64 to get to next Plane! Because of the normalization of the pocket planes it is only necessary to look at one entry per plane
         {
             if (inputPlanes[i + batchIdx * numberInputTotal] > 0) {
                 //info_string("//MR: inputPlanes[i + batchIdx * numberInputTotal] = " + to_string(inputPlanes[i + batchIdx * numberInputTotal]));
                 index = i + batchIdx * numberInputTotal;
                 chanel = i / 64;
-                if (print) {
-                    info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]) + " | inpPl[idx]=" + to_string(inputPlanes[i + batchIdx * numberInputTotal]));
-                    print = false;
-                }
-                i_factPlanes = i - 128; //MR shifts back two planes (see documentation)
-                if (valueOutputs[batchIdx] > factPlanes[i]) {
-                    factPlanes[i] = valueOutputs[batchIdx];
+                numberPocketPieces = inputPlanes[i + batchIdx * numberInputTotal] / 0.03125; //MR 0.03125 is the value if one piece of a type is in the pocket
+                idxOnfactPlane = i - 128 + numberPocketPieces; //MR shifts back two planes (see documentation of input representation) and to the index of the field that contains the noveltyScore for numberPocketPieces
+                info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | idxOnFactPlane=" + to_string(idxOnfactPlane)  + " | factPlanes[idxOnfactPlane]=" + to_string(factPlanes[idxOnfactPlane]) + " | inpPl[idx]=" + to_string(inputPlanes[i + batchIdx * numberInputTotal]) + " | numberPocketPieces=" + to_string(numberPocketPieces));
+                if (valueOutputs[batchIdx] > factPlanes[idxOnfactPlane]) {
+                    factPlanes[idxOnfactPlane] = valueOutputs[batchIdx];
                     isNovel = true;
                     numberOfNovelFacts++; //MR raus nach debug!
                     numberOfNovelPocketPieces++; //MR raus nach debug!
