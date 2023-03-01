@@ -170,7 +170,7 @@ Node* SearchThread::get_starting_node(Node* currentNode, NodeDescription& descri
 
 Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 {
-    info_string("//MR: get_new_child_to_evaluate() -> erstelle eine neue Trajektorie");
+    //info_string("//MR: get_new_child_to_evaluate() -> erstelle eine neue Trajektorie");
     description.depth = 0;
     Node* currentNode = rootNode;
     Node* nextNode;
@@ -509,7 +509,7 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
         return;
     }
 #endif
-    info_string("//MR: newNode node_assign_value(...) mit value: " + to_string(valueOutputs[batchIdx]));
+    //info_string("//MR: newNode node_assign_value(...) mit value: " + to_string(valueOutputs[batchIdx]));
     node->set_value(valueOutputs[batchIdx]);
 }
 
@@ -552,13 +552,17 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
         size_t inputPlanesSizePocket = 8 * 8 * 10;
         int offsetForPocketPieces = 8 * 8 * 14;
         int i_factPlanes; //MR this variable is used for the indices in the factPlanes. Since the indices of the pocket pieces in the inputPlanes is different than in the factPlanes this is necessary
+        bool print = true;
         for (int i = offsetForPocketPieces; i < offsetForPocketPieces + inputPlanesSizePocket; i++)
         {
             if (inputPlanes[i + batchIdx * numberInputTotal] > 0) {
-                info_string("//MR: inputPlanes[i + batchIdx * numberInputTotal] = " + to_string(inputPlanes[i + batchIdx * numberInputTotal]));
+                //info_string("//MR: inputPlanes[i + batchIdx * numberInputTotal] = " + to_string(inputPlanes[i + batchIdx * numberInputTotal]));
                 index = i + batchIdx * numberInputTotal;
                 chanel = i / 64;
-                info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));
+                if (print) {
+                    info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | batchIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]) + " | inpPl[idx]=" + to_string(inputPlanes[i + batchIdx * numberInputTotal]));
+                    print = false;
+                }
                 i_factPlanes = i - 128; //MR shifts back two planes (see documentation)
                 if (valueOutputs[batchIdx] > factPlanes[i]) {
                     factPlanes[i] = valueOutputs[batchIdx];
