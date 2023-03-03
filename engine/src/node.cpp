@@ -83,7 +83,7 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings):
     legalActions(state->legal_actions()),
     key(state->hash_key()),
     valueSum(0),
-    noveltyScore(0), //MR
+    noveltyScoreSum(0), //MR
     d(nullptr),
     #ifdef MCTS_STORE_STATES
     state(state),
@@ -551,7 +551,7 @@ float Node::get_value() const
 //MR
 float Node::get_novelty_score() const
 {
-    return noveltyScore;
+    return noveltyScoreSum / realVisitsSum;
 }
 
 
@@ -668,13 +668,14 @@ DynamicVector<float>& Node::get_policy_prob_small()
 
 void Node::set_value(float value)
 {
-    ++this->realVisitsSum;
+    ++this->realVisitsSum; //MR das hier sollte ausgelagert werden, da ansonsten evtl nicht klar ist, dass man bei einem update erst set_value() und dann set_novelty_score() aufrufen muss!
+                            //MR alternativ diese Methode zu set_value_and_novelty() vereinen, aber dann müssen einige Funktionsaufrufe verändert werden
     this->valueSum = value * this->realVisitsSum;
 }
 
 void Node::set_novelty_score(double noveltyScore)
 {
-    this->noveltyScore = noveltyScore;
+    this->noveltyScoreSum = noveltyScore * this->realVisitsSum;
 }
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
@@ -686,7 +687,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
             shared_ptr<Node> transpositionNode = it->second.lock();
             Node* tranpositionNode = get_child_node(childIdx);
             if (tranpositionNode != nullptr) { //MR wenn der als nächstes ausgewählte Zustand (hier transpositionNode) nicht nullptr ist, heißt es, dass er schon aus einem anderen Pfad besucht wurde!!
-                if(is_transposition_verified(tranpositionNode, newState)) {
+                if(is_transposition_verified(tranpositionNode, newState)) { //MR Kreise im Graphen vermeiden (unter anderem)
                     d->childNodes[childIdx] = atomic_load(&transpositionNode);
                     mapWithMutex->mtx.unlock();
                     tranpositionNode->lock();

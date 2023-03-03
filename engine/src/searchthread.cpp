@@ -96,16 +96,19 @@ void SearchThread::set_fact_planes(float* value)
 Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, ChildIdx childIdx, NodeBackup& nodeBackup)
 {
     bool transposition;
-    //MR in folgender Zeile muss ich nichts aendern, das ist unabhaengig vom value.
+    //MR in folgender Methode muss ich nichts aendern, das ist unabhaengig vom value.
     Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
     if (transposition) {
+        
         const float qValue = parentNode->get_child_node(childIdx)->get_value(); //MR wenn in MCGS transpoNode, dann gab es fuer den Kindknoten schon eine NN Evaluation
         //MR
-        const float noveltyScore = parentNode->get_child_node(childIdx)->get_novelty_score(); //MR so sähr die naive Implementation aus...
+        const float noveltyScore = parentNode->get_child_node(childIdx)->get_novelty_score(); //MR stattdessen könnte man auch neu ermitteln, ob der Zustand novel ist...
         transpositionValues->add_element(qValue);
         //MR
         transpositionNoveltyScores->add_element(noveltyScore);
-        //info_string("//MR: transposition node! mit qValue = " + to_string(qValue) + " und noveltyScore = " + to_string(noveltyScore));
+        //MR HIER MUSS EIGENTLICH NOCH DER VISIT DES KNOTENS GEUPDATED WERDEN!!! -> oder ist es so gewollt, weil das den Value des Zustandes verfälscht?
+        
+        info_string("//MR: transposition neu gefunden! mit qValue = " + to_string(qValue) + " und noveltyScore = " + to_string(noveltyScore));
         nodeBackup = NODE_TRANSPOSITION;
         return newNode;
     }
@@ -273,10 +276,11 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx);
             const double transposQValue = -currentNode->get_q_sum(childIdx, searchSettings->virtualLoss) / transposVisits;
 
-            if (nextNode->is_transposition_return(transposQValue)) { //MR Wenn der reale QValue != QValue(inkl. VL) für den transpoNode ist! 
+            if (nextNode->is_transposition_return(transposQValue)) { //MR Wenn der QValue der Kante vom parent zu diesem Knoten != Value für den transpoNode ist! (INFORMATIONSDEFIZIT) 
                 const float qValue = get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value());
-                const float noveltyScore = nextNode->get_novelty_score(); //MR so sähr die naive Implementation aus...
-                //info_string("//MR: transpoNode bekommt novScore: " + to_string(noveltyScore) + " und qValue: " + to_string(qValue));
+                //MR
+                const float noveltyScore = nextNode->get_novelty_score();
+                info_string("//MR: Informationsausgleich TranspoNode mit novScore: " + to_string(noveltyScore) + " und qValue: " + to_string(qValue));
                 nextNode->unlock();
                 description.type = NODE_TRANSPOSITION;
                 transpositionValues->add_element(qValue);

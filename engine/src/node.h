@@ -96,9 +96,8 @@ private:
     // singular values
     // valueSum stores the sum of all incoming value evaluations
     double valueSum;
-
-    //MR Muss bei noveltyScore auch die Summe gespeichert werden? -> JA! Sonst funktioniert der Backprop nicht!
-    double noveltyScore;
+    //MR
+    double noveltyScoreSum;
 
     unique_ptr<NodeData> d;
 #ifdef MCTS_STORE_STATES
@@ -199,9 +198,9 @@ public:
         update_virtual_loss_counter<false>(childIdx, virtualLoss); //MR wäre meiner Meinung nach schlauer das erst nach der Aktualisierung des NoveltyScores zu tun um leichter an die realVisits zu kommen!
 
         valueSum += value;
-        //MR HIER MUSS ICH AUCH DEN NOV_SCORE DER IM KNOTEN GESPEICHERT WIRD UPDATEN!!
+        noveltyScoreSum += noveltyScore; //MR
         ++realVisitsSum;
-        //info_string("//MR: revVLaU(): realVisitSum des Elternknotens des zu updatenden = " + to_string(realVisitsSum));
+        //info_string("//MR: revVLaU(): realVisitSum des Elternknotens des zu updatenden = " + to_string(realVisitsSum) + " | dessen value=" + to_string(valueSum) + " | dessen novScore=" + to_string(noveltyScoreSum));
 
         //info_string("//MR: revVLaU(): d->childNumberVisits[childIdx] = " + to_string(d->childNumberVisits[childIdx]) + " virtualLoss = " + to_string(virtualLoss) + " und  d->virtualLossCounter[childIdx] = " + to_string(d->virtualLossCounter[childIdx]));
         
@@ -361,7 +360,10 @@ public:
     void enhance_moves(const SearchSettings* searchSettings);
 
     void set_value(float value);
+
+    //MR ES MUSS BEIM UPDATE IMMER ERST set_value() UND DANN ERST set_novelty_score() AUFGERUFEN WERDEN!! Wegen der realVisitsSum
     void set_novelty_score(double noveltyScore);
+
     uint16_t main_child_idx_for_parent() const;
 
     /**
