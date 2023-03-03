@@ -97,7 +97,7 @@ private:
     // valueSum stores the sum of all incoming value evaluations
     double valueSum;
 
-    //MR Muss bei noveltyScore auch die Summe gespeichert werden?
+    //MR Muss bei noveltyScore auch die Summe gespeichert werden? -> JA! Sonst funktioniert der Backprop nicht!
     double noveltyScore;
 
     unique_ptr<NodeData> d;
@@ -199,6 +199,7 @@ public:
         update_virtual_loss_counter<false>(childIdx, virtualLoss); //MR wäre meiner Meinung nach schlauer das erst nach der Aktualisierung des NoveltyScores zu tun um leichter an die realVisits zu kommen!
 
         valueSum += value;
+        //MR HIER MUSS ICH AUCH DEN NOV_SCORE DER IM KNOTEN GESPEICHERT WIRD UPDATEN!!
         ++realVisitsSum;
         //info_string("//MR: revVLaU(): realVisitSum des Elternknotens des zu updatenden = " + to_string(realVisitsSum));
 
