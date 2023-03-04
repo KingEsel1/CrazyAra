@@ -278,7 +278,9 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 
             if (nextNode->is_transposition_return(transposQValue)) { //MR Wenn der QValue der Kante vom parent zu diesem Knoten != Value für den transpoNode ist! (INFORMATIONSDEFIZIT) 
                 const float qValue = get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value());
-                //MR
+                //MR const double transposNoveltyScore = currentNode->get_novelty_sum(childIdx) / transposVisits;
+                //MR const float noveltyScore = get_transposition_novelty_score(transposVisits, transposNoveltyScore, nextNode->get_novelty_score())
+                //MR folgende Zeile ist glaube ich falsch, weil dadurch der alte noveltyScore 
                 const float noveltyScore = nextNode->get_novelty_score();
                 info_string("//MR: Informationsausgleich TranspoNode mit novScore: " + to_string(noveltyScore) + " und qValue: " + to_string(qValue));
                 nextNode->unlock();

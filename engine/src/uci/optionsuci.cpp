@@ -163,7 +163,7 @@ void OptionsUCI::init(OptionsMap &o)
 #ifdef SUPPORT960
     o["UCI_Chess960"]                  << Option(false);
 #endif
-    o["Search_Type"]                   << Option("mcts", {"mcgs", "mcts"}); //MR mcts statt mcgs
+    o["Search_Type"]                   << Option("mcgs", {"mcgs", "mcts"}); //MR war mcgs
 #ifdef USE_RL
     o["Simulations"]                   << Option(3200, 0, 99999999);
 #else

@@ -36,7 +36,7 @@ SearchSettings::SearchSettings():
         virtualLoss(1.0f),
         verbose(true),
         epsilonChecksCounter(0), //MR war davor 100!!!
-        useMCGS(false),  //MR geaendert!!
+        useMCGS(true),  //MR war true
         cpuctInit(2.5f),
         cpuctBase(19652.0f),
         uInit(1.0f),
