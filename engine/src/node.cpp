@@ -685,7 +685,6 @@ void Node::set_novelty_score(double noveltyScore)
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
 {
-    info_string("//MR: searchSettings->useMCGS = " + to_string(searchSettings->useMCGS));
     if(searchSettings->useMCGS) {
         mapWithMutex->mtx.lock();
         HashMap::const_iterator it = mapWithMutex->hashTable.find(newState->hash_key());

@@ -98,6 +98,7 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
     bool transposition;
     //MR in folgender Methode muss ich nichts aendern, das ist unabhaengig vom value.
     Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
+    info_string("//MR: searchSettings->useMCGS = " + to_string(searchSettings->useMCGS) + " and transposition = " + to_string(transposition));
     if (transposition) {
         
         const float qValue = parentNode->get_child_node(childIdx)->get_value(); //MR wenn in MCGS transpoNode, dann gab es fuer den Kindknoten schon eine NN Evaluation
