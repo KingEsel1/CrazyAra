@@ -274,15 +274,15 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             //info_string("//MR: nextNode->is_transposition()");
             nextNode->lock();
             const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx);
+            //MR für die qValues muss der Umweg über die q_sum gegangen werden, um den virtualLoss herauszurechnen
             const double transposQValue = -currentNode->get_q_sum(childIdx, searchSettings->virtualLoss) / transposVisits;
 
             if (nextNode->is_transposition_return(transposQValue)) { //MR Wenn der QValue der Kante vom parent zu diesem Knoten != Value für den transpoNode ist! (INFORMATIONSDEFIZIT) 
                 const float qValue = get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value());
-                //MR const double transposNoveltyScore = currentNode->get_novelty_sum(childIdx) / transposVisits;
-                //MR const float noveltyScore = get_transposition_novelty_score(transposVisits, transposNoveltyScore, nextNode->get_novelty_score())
-                //MR folgende Zeile ist glaube ich falsch, weil dadurch der alte noveltyScore 
-                const float noveltyScore = nextNode->get_novelty_score();
-                info_string("//MR: Informationsausgleich TranspoNode mit novScore: " + to_string(noveltyScore) + " und qValue: " + to_string(qValue));
+                //MR
+                const double transposNoveltyScore = currentNode->get_novelty_score_of_action(childIdx);
+                const float noveltyScore = get_transposition_novelty_score(transposVisits, transposNoveltyScore, nextNode->get_novelty_score());
+                info_string("//MR: Informationsausgleich TranspoNode mit novScore: " + to_string(noveltyScore) + " und qValue: " + to_string(qValue) + " davor: transpoQVal=" + to_string(transposQValue) + " | transpoNovSc=" + to_string(transposNoveltyScore) + " | transpoVis=" + to_string(transposVisits));
                 nextNode->unlock();
                 description.type = NODE_TRANSPOSITION;
                 transpositionValues->add_element(qValue);

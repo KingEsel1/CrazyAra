@@ -456,6 +456,14 @@ public:
     float get_q_value(ChildIdx idx) const;
 
     /**
+     * @brief get_novelty_score_of_action Returns the novelty score for the given child index
+     * @param idx Child Index
+     * @return novelty score
+     */
+    //MR
+    float get_novelty_score_of_action(ChildIdx idx) const;
+
+    /**
      * @brief get_q_values Returns the Q-values for all child nodes
      * @return Q-values
      */
@@ -799,6 +807,8 @@ bool is_terminal_value(float value);
 void backup_collision(float virtualLoss, const Trajectory& trajectory);
 
 float get_transposition_q_value(uint_fast32_t transposVisits, double transposQValue, double masterQValue);
+//MR
+float get_transposition_novelty_score(uint_fast32_t transposVisits, double transposNoveltyScore, double masterNoveltyScore);
 
 /**
  * @brief backup_value Iteratively backpropagates a value prediction across all of the parents for this node.
@@ -812,17 +822,19 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 template <bool freeBackup>
 void backup_value(float value, float virtualLoss, const Trajectory& trajectory, bool solveForTerminal, float noveltyScore) {
     double targetQValue = 0;                                                                           //MR
+    double targetNoveltyScore = 0;
     //info_string("//MR: Die Trajektorie hat so viele Knoten nach dem Wurzelknoten " + to_string(trajectory.size()));
     int i = trajectory.size() - 1; //MR am Ende Variable i entfernen, nur zu testzwecken!!
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
-        if (targetQValue != 0) {
+        if (targetQValue != 0) { //MR hier geht er rein, wenn durch vorheriges backpropen einer Trjakt. dieses Minibatches ein Informationsdefizit entsteht. Dann muss der zurückpropagirte value und novScore neu berechnet werden
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
             if (transposVisits != 0) {
                 const double transposQValue = -it->node->get_q_sum(it->childIdx, virtualLoss) / transposVisits;
                 value = get_transposition_q_value(transposVisits, transposQValue, targetQValue);
                 //MR
-                //info_string("//MR: backup mit transposVisits > 0 -> noveltyScore in params was = " + to_string(noveltyScore) + " and noveltyScore from transposNode is = " + to_string(it->node->get_novelty_score()));
-                noveltyScore = it->node->get_novelty_score();
+                const double transposNoveltyScore = it->node->get_novelty_score_of_action(it->childIdx);
+                noveltyScore = get_transposition_novelty_score(transposVisits, transposNoveltyScore, targetNoveltyScore);
+                info_string("//MR: backup mit Informationsdefizit! neuer noveltyScore = " + to_string(noveltyScore) + " and neuer value = " + to_string(value));
             }
         }
         i--;
@@ -834,11 +846,13 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
         freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore) :
                    it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, virtualLoss, solveForTerminal, noveltyScore);
 
-        if (it->node->is_transposition()) {
+        if (it->node->is_transposition()) { //MR Wenn dieser Knoten eine Transpo ist, kann evtl. der QValue vom parent zu diesem Knoten ein Informationsdefizit durch das Backpropen in minibatches vorliegen
             targetQValue = it->node->get_value();
+            targetNoveltyScore = it->node->get_novelty_score();
         }
         else {
             targetQValue = 0;
+            targetNoveltyScore = 0;
         }
     }
 }

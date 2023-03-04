@@ -38,7 +38,7 @@ bool Node::is_sorted() const
 
 double Node::get_q_sum(ChildIdx childIdx, float virtualLoss) const
 {
-    return get_child_number_visits(childIdx) * double(get_q_value(childIdx)) + get_virtual_loss_counter(childIdx) * virtualLoss;
+    return get_child_number_visits(childIdx) * double(get_q_value(childIdx)) + get_virtual_loss_counter(childIdx) * virtualLoss; //MR hier ist ein Fehler: der counter beinhaltet schon die VL Summe. Falls VL=1 ist es egal
 }
 
 bool Node::is_transposition() const
@@ -482,6 +482,11 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
 float Node::get_q_value(ChildIdx childIdx) const
 {
     return d->qValues[childIdx];
+}
+
+float Node::get_novelty_score_of_action(ChildIdx childIdx) const
+{
+    return d->noveltyScores[childIdx];
 }
 
 DynamicVector<float> Node::get_q_values() const
@@ -1301,6 +1306,11 @@ bool is_terminal_value(float value)
 float get_transposition_q_value(uint_fast32_t transposVisits, double transposQValue, double targetQValue)
 {
     return std::clamp(transposVisits * (targetQValue - transposQValue) + targetQValue, double(LOSS_VALUE), double(WIN_VALUE));
+}
+
+float get_transposition_novelty_score(uint_fast32_t transposVisits, double transposNoveltyScore, double targetNoveltyScore)
+{
+    return std::clamp(transposVisits * (targetNoveltyScore - transposNoveltyScore) + targetNoveltyScore, double(LOSS_VALUE), double(WIN_VALUE));
 }
 
 bool is_transposition_verified(const Node* node, const StateObj* state) {
