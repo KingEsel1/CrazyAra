@@ -109,7 +109,7 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
         transpositionNoveltyScores->add_element(noveltyScore);
         //MR HIER MUSS EIGENTLICH NOCH DER VISIT DES KNOTENS GEUPDATED WERDEN!!! -> oder ist es so gewollt, weil das den Value des Zustandes verfälscht?
         
-        info_string("//MR: transposition neu gefunden! mit qValue = " + to_string(qValue) + " und noveltyScore = " + to_string(noveltyScore));
+        //info_string("//MR: transposition neu gefunden! mit qValue = " + to_string(qValue) + " und noveltyScore = " + to_string(noveltyScore));
         nodeBackup = NODE_TRANSPOSITION;
         return newNode;
     }
@@ -249,7 +249,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 newNodeSideToMove->add_element(newState->side_to_move());
 #endif
             }
-            //MR update NoveltyScore of node with new parent (MCGS only)
+            //MR update NoveltyScore of node with new parent (MCGS only) -> mache das nicht, da es wahrscheinlich nichts bringt und Speicher und Laufzeitaufwändig ist...
             /*
             if (description.type == NODE_TRANSPOSITION) {
                 newState->get_state_planes(true, currentInputPlanes, ??); //MR übrarbeiten!! warum steht für den dritten Parameter oben "net->get_version()" obwohl "size" in der Beschreibung steht?
@@ -283,7 +283,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 //MR
                 const double transposNoveltyScore = currentNode->get_novelty_score_of_action(childIdx);
                 const float noveltyScore = get_transposition_novelty_score(transposVisits, transposNoveltyScore, nextNode->get_novelty_score());
-                info_string("//MR: Informationsausgleich TranspoNode mit novScore: " + to_string(noveltyScore) + " und qValue: " + to_string(qValue) + " davor: transpoQVal=" + to_string(transposQValue) + " | transpoNovSc=" + to_string(transposNoveltyScore) + " | transpoVis=" + to_string(transposVisits));
+                //info_string("//MR: Informationsausgleich TranspoNode mit novScore: " + to_string(noveltyScore) + " und qValue: " + to_string(qValue) + " davor: transpoQVal=" + to_string(transposQValue) + " | transpoNovSc=" + to_string(transposNoveltyScore) + " | transpoVis=" + to_string(transposVisits));
                 nextNode->unlock();
                 description.type = NODE_TRANSPOSITION;
                 transpositionValues->add_element(qValue);
