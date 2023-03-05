@@ -728,6 +728,7 @@ void CrazyAra::init_search_settings()
     searchSettings.noveltyDecay = Options["Milli_Novelty_Decay"] / 1000.0f;
     searchSettings.noveltyValue = Options["Milli_Novelty_Value"] / 1000.0f;
     searchSettings.usePocketForNovelty = Options["Use_Pocket_For_Novelty"]; //MR
+    searchSettings.useEvaluationNovelty = Options["Novelty_Type"] == "evaluation";
 }
 
 void CrazyAra::init_play_settings()

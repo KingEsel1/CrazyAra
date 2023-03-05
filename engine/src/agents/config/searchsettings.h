@@ -73,6 +73,7 @@ struct SearchSettings
     float noveltyDecay;
     float noveltyValue;
     bool usePocketForNovelty; //MR
+    bool useEvaluationNovelty;
     SearchSettings();
 
 };

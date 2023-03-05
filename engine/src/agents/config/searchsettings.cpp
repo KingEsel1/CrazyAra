@@ -52,7 +52,8 @@ SearchSettings::SearchSettings():
     //MR
         noveltyDecay(0.0f),
         noveltyValue(0.0f),
-        usePocketForNovelty(true) //MR
+        usePocketForNovelty(true), //MR
+        useEvaluationNovelty(true)
 {
 
 }

@@ -321,14 +321,14 @@ void SearchThread::reset_stats()
 }
 
 //MR add inputPlanes to params
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total)
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total) //MR-pseudo , float timeStep, float featureProbabilities
 {
     //info_string("//MR: fill_nn_results(...) to newNodes");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
-    //MR
-    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes, factPlanes, number_input_total);
+    //MR-pseudo
+    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes, factPlanes, number_input_total); //MR-pseudo , timeStep, featureProbabilities
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif
@@ -342,7 +342,7 @@ void SearchThread::set_nn_results_to_child_nodes()
         if (!node->is_terminal()) {
             fill_nn_results(batchIdx, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, node,
                             tbHits, rootState->mirror_policy(newNodeSideToMove->get_element(batchIdx)),
-                            searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total());
+                            searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total()); //MR-pseudo , timeStep, featureProbabilities
         }
         ++batchIdx;
     }
@@ -520,7 +520,7 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
     node->set_value(valueOutputs[batchIdx]);
 }
 
-void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes, int numberInputTotal)
+void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes, int numberInputTotal) //MR, float timeStep, float featureProbabilities
 {
     //MR calculate novelty score here!
     bool isNovel = false;
@@ -530,6 +530,10 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     int col = 0;
     int chanel = 0;
     int index = 0;
+
+    //MR-pseudo
+    //++timestep;
+    // int featurePropabilitiesNew = 1; //MR feature probabilities at timestep t + 1
 
     //MR 8 * 8 = 64 squares * 12 piecetypes
     size_t inputPlanesSizeBoard = 8 * 8 * 12;
@@ -545,12 +549,18 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             //info_string("//MR: board! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col) + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));  
             
             //MR ckeck if the value of the newly evaluated state is greater than any score of a fact that is active in that state
-            if (valueOutputs[batchIdx] > factPlanes[i]) {
+            if (valueOutputs[batchIdx] > factPlanes[i]) { //MR-pseudo && searchSettings->useEvaluationNovelty
                 factPlanes[i] = valueOutputs[batchIdx];
                 isNovel = true;
                 numberOfNovelFacts++; //MR raus nach debug!
             }
+            //MR-pseudo
+            // else { //MR searchSettings->usePseudocountNovelty
+            //    ++factPlanes[i];
+            // }
         }
+        //MR-pseudo
+        // featurePropabilitiesNew *= factPlanes[idxOnFactPlane] / timeStep;
     }
 
 #ifdef MODE_CRAZYHOUSE
@@ -558,34 +568,48 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
         //MR this loop covers the facts for the pocket pieces (planes with index 14 to 23 of inputPlanes)
         size_t inputPlanesSizePocket = 8 * 8 * 10;
         int offsetForPocketPieces = 8 * 8 * 14;
-        int idxOnfactPlane; //MR this variable is used for the indices in the factPlanes. Since the indices of the pocket pieces in the inputPlanes is different than in the factPlanes this is necessary
+        int idxOnFactPlane; //MR this variable is used for the indices in the factPlanes. Since the indices of the pocket pieces in the inputPlanes is different than in the factPlanes this is necessary
         int numberPocketPieces; //MR defines the number of pieces of a piecetype in a pocket
-        for (int i = offsetForPocketPieces; i < offsetForPocketPieces + inputPlanesSizePocket; i = i + 64) //MR shift i by 64 to get to next Plane! Because of the normalization of the pocket planes it is only necessary to look at one entry per plane
+
+        for (int i = offsetForPocketPieces; i < offsetForPocketPieces + inputPlanesSizePocket; i += 64) //MR shift i by 64 to get to next Plane! Because of the normalization of the pocket planes it is only necessary to look at one entry per plane
         {
+            numberPocketPieces = inputPlanes[i + batchIdx * numberInputTotal] / 0.03125; //MR 0.03125 is the value if one piece of a type is in the pocket
+            idxOnFactPlane = i - 128 + numberPocketPieces - 1; //MR shifts back two planes (see documentation of input representation) and to the index of the field that contains the noveltyScore for numberPocketPieces (-1 because numberPocketPieces is not a index!!)
             if (inputPlanes[i + batchIdx * numberInputTotal] > 0) {
                 //info_string("//MR: inputPlanes[i + batchIdx * numberInputTotal] = " + to_string(inputPlanes[i + batchIdx * numberInputTotal]));
                 index = i + batchIdx * numberInputTotal;
                 chanel = i / 64;
                 //MR ersetze 0.03125 durch double pocketDivisor = 1 / StateConstants::MAX_NB_PRISONERS(); ist 1 /32 = 0.03125
-                numberPocketPieces = inputPlanes[i + batchIdx * numberInputTotal] / 0.03125; //MR 0.03125 is the value if one piece of a type is in the pocket
-                idxOnfactPlane = i - 128 + numberPocketPieces - 1; //MR shifts back two planes (see documentation of input representation) and to the index of the field that contains the noveltyScore for numberPocketPieces (-1 because numberPocketPieces is not a index!!)
                 //info_string("//MR: pocket! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | bIdx= " + to_string(batchIdx) + " | numbInp=" + to_string(numberInputTotal) + " | value[bIdx]=" + to_string(valueOutputs[batchIdx]) + " | idxOnFactPlane=" + to_string(idxOnfactPlane)  + " | factPlanes[idxOnfactPlane]=" + to_string(factPlanes[idxOnfactPlane]) + " | inpPl[idx]=" + to_string(inputPlanes[i + batchIdx * numberInputTotal]) + " | numbPockPieces=" + to_string(numberPocketPieces));
-                if (valueOutputs[batchIdx] > factPlanes[idxOnfactPlane]) {
-                    factPlanes[idxOnfactPlane] = valueOutputs[batchIdx];
+                //MR-pseudo
+                // if (searchSettings->useEvaluationNovelty) {
+                if (valueOutputs[batchIdx] > factPlanes[idxOnFactPlane]) {
+                    factPlanes[idxOnFactPlane] = valueOutputs[batchIdx];
                     isNovel = true;
                     numberOfNovelFacts++; //MR raus nach debug!
                     numberOfNovelPocketPieces++; //MR raus nach debug!
                 }
+                //MR-pseudo
+                // } else { //MR searchSettings->usePseudocountNovelty
+                //    ++factPlanes[idxOnFactPlane];
+                // }
             }
+            //MR-pseudo
+            // featurePropabilitiesNew *= factPlanes[idxOnFactPlane] / timeStep;
         }
     }
 #endif
 
-    if (isNovel) {
+    if (isNovel) { //MR-pseudo && searchSettings->useEvaluationNovelty
         //info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
         node->set_novelty_score((double) searchSettings->noveltyValue);
         //info_string("//MR: numberOfNovelFacts=" + to_string(numberOfNovelFacts));
     }
+    //MR-pseudo
+    // else { //MR searchSettings->usePseudocountNovelty
+    //    featurePseudocount = (featureProbabilities * (1 - featureProbabilitiesNew)) / (featureProbabilitiesNew - featureProbabilities);
+    //    node->set_novelty_score((double) searchSettings->noveltyValue / sqrt(featurePseudocount));
+    // }
     //info_string("//MR: --------------------------->>>>> isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " , number of novel facts = " + to_string(numberOfNovelFacts) + " , numberOfNovelPocketPieces = " + to_string(numberOfNovelPocketPieces++));
 }
 

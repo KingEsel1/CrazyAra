@@ -62,10 +62,20 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     int dimFactPlanes = 1408; //MR = 8 * 8 * 12 (board pieces) + 8 * 8 * 10 (pocket pieces)
     //int dimFactPlanes = 768;
     factPlanes = new float[dimFactPlanes];
+    //MR-pseudo
+    //if (searchSettings->useEvaluationNovelty) {
     for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
         factPlanes[i] = -1.0f;
     }
-    //info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
+    //MR-pseudo
+    // } else { //MR searchSettings->usePseudocountNovelty
+    //    for (int i = 0; i < dimFactPlanes; i++) {
+    //       factPlanes[i] = 0.0f;
+    //    }
+    //    float timeStep = 0; //MR save timestep for pseudocount novelty. It represents the call of the neural net
+    //    float featureProbabilities = 1; //MR save product of all feature probabilities of timestep t
+    // }
+    //info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[1408] = " + to_string(factPlanes[1408]));
 }
 
 MCTSAgent::~MCTSAgent()
@@ -193,7 +203,7 @@ void MCTSAgent::create_new_root_node(StateObj* state)
     //info_string("//MR: mctsagent -> before fill_nn_results in create_new_root_node! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
     //MR add inputPlanes and factPlanes to params -> WOHER KENNT ER fill_nn_results? Das ist doch eine Methode von SearchThread...
     fill_nn_results(0, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, rootNode.get(), tbHits,
-                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total());
+                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total()); //MR, timeStep, featureProbabilities
 #endif
     rootNode->prepare_node_for_visits();
 }

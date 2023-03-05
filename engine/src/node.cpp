@@ -1310,7 +1310,8 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 
 float get_transposition_novelty_score(uint_fast32_t transposVisits, double transposNoveltyScore, double targetNoveltyScore)
 {
-    return std::clamp(transposVisits * (targetNoveltyScore - transposNoveltyScore) + targetNoveltyScore, double(LOSS_VALUE), double(WIN_VALUE));
+    //MR hier ist kein std::clamp notwendig, da der novelty_score auch größer als 1 sein kann...
+    return transposVisits * (targetNoveltyScore - transposNoveltyScore) + targetNoveltyScore;
 }
 
 bool is_transposition_verified(const Node* node, const StateObj* state) {
