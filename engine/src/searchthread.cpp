@@ -560,7 +560,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            //info_string("//MR: board! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col) + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));  
+            info_string("//MR: board! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col) + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));  
 
             //MR ckeck if the value of the newly evaluated state is greater than any score of a fact that is active in that state
             if (searchSettings->useEvaluationNovelty) {
@@ -575,6 +575,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
             //MR-pseudo
             featureProbabilitiesNew *= factPlanes[i] / timeStep;
+            info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew));
         }
     }
 
@@ -610,6 +611,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
             //MR-pseudo
             featureProbabilitiesNew *= factPlanes[idxOnFactPlane] / timeStep;
+            info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew));
         }
     }
 #endif
@@ -625,6 +627,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     else { //MR searchSettings->usePseudocountNovelty
         const float featurePseudocount = (featureProbabilities * (1 - featureProbabilitiesNew)) / (featureProbabilitiesNew - featureProbabilities);
         node->set_novelty_score((double) searchSettings->noveltyValue / sqrt(featurePseudocount));
+        info_string("//MR: pseudo: new novScore=" + to_string((double)searchSettings->noveltyValue / sqrt(featurePseudocount))+" | featurePseudocount="+to_string(featurePseudocount)+" | featureProbabilities"+to_string(featureProbabilities)+" | featureProbabilitiesNew"+to_string(featureProbabilitiesNew));
     }
     //info_string("//MR: --------------------------->>>>> isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " , number of novel facts = " + to_string(numberOfNovelFacts) + " , numberOfNovelPocketPieces = " + to_string(numberOfNovelPocketPieces++));
 }
