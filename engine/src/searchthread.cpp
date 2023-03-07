@@ -96,13 +96,13 @@ void SearchThread::set_fact_planes(float* value)
 }
 
 //MR
-void SearchThread::set_time_step(float value)
+void SearchThread::set_time_step(int value)
 {
     timeStep = value;
 }
 
 //MR
-void SearchThread::set_feature_probabilities(float value)
+void SearchThread::set_feature_probabilities(double value)
 {
     featureProbabilities = value;
 }
@@ -335,7 +335,7 @@ void SearchThread::reset_stats()
 }
 
 //MR 
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total, float timeStep, float featureProbabilities) //MR-pseudo 
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total, int timeStep, double featureProbabilities) //MR-pseudo 
 {
     //info_string("//MR: fill_nn_results(...) to newNodes");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
@@ -534,7 +534,7 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
     node->set_value(valueOutputs[batchIdx]);
 }
 
-void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes, int numberInputTotal, float timeStep, float featureProbabilities) //MR-pseudo 
+void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes, int numberInputTotal, int timeStep, double featureProbabilities) //MR-pseudo 
 {
     //MR calculate novelty score here!
     bool isNovel = false;
@@ -546,8 +546,8 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     int index = 0;
 
     //MR-pseudo
-    ++timeStep;
-    int featureProbabilitiesNew = 1; //MR feature probabilities at timestep t + 1
+    timeStep+=1;
+    double featureProbabilitiesNew = 1; //MR feature probabilities at timestep t + 1
 
     //MR 8 * 8 = 64 squares * 12 piecetypes
     size_t inputPlanesSizeBoard = 8 * 8 * 12;
@@ -635,14 +635,14 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             info_string("//MR: featureProbabilitiesNew - featureProbabilities == 0.0f!!!");
             featureProbabilitiesNew += 0.01;
         }
-        float featurePseudocount = (featureProbabilities * (1 - featureProbabilitiesNew)) / (featureProbabilitiesNew - featureProbabilities);
+        double featurePseudocount = (featureProbabilities * (1 - featureProbabilitiesNew)) / (featureProbabilitiesNew - featureProbabilities);
         if (featurePseudocount == 0.0f) { //MR kommt das vor? Wenn ja, wie soll ich damit umgehen?
             info_string("//MR: featurePseudocount == 0.0f!!!");
             featurePseudocount += 0.001;
         }
         node->set_novelty_score((double) searchSettings->noveltyValue / sqrt(featurePseudocount));
         featureProbabilities = featureProbabilitiesNew; //MR set featureProb from timeStep t to t+1
-        info_string("//MR: pseudo: new novScore=" + to_string((double)searchSettings->noveltyValue / sqrt(featurePseudocount))+" | featurePseudocount="+to_string(featurePseudocount)+" | featureProbabilities"+to_string(featureProbabilities)+" | featureProbabilitiesNew"+to_string(featureProbabilitiesNew));
+        info_string("//MR:\n -------------------------->>>>>>> pseudo: new novScore=" + to_string((double)searchSettings->noveltyValue / sqrt(featurePseudocount))+" | featurePseudocount="+to_string(featurePseudocount)+" | featureProbabilities="+to_string(featureProbabilities)+" | featureProbabilitiesNew="+to_string(featureProbabilitiesNew));
     }
     //info_string("//MR: --------------------------->>>>> isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " , number of novel facts = " + to_string(numberOfNovelFacts) + " , numberOfNovelPocketPieces = " + to_string(numberOfNovelPocketPieces++));
 }
