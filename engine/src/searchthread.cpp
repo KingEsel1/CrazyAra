@@ -561,7 +561,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             col = (i % 64) % 8;
             row = (i % 64) / 8;
             //info_string("//MR: board! idx=" + to_string(index) + " i=" + to_string(i) + " | chanel=" + to_string(chanel) + " | row=" + to_string(row) + " | col=" + to_string(col) + " | batchIdx= " + to_string(batchIdx) + " | numbInpTotal=" + to_string(numberInputTotal) + " | valueOutputs[batchIdx]=" + to_string(valueOutputs[batchIdx]) + " | factPlanes[i]=" + to_string(factPlanes[i]));  
-            
+
             //MR ckeck if the value of the newly evaluated state is greater than any score of a fact that is active in that state
             if (searchSettings->useEvaluationNovelty) {
                 if (valueOutputs[batchIdx] > factPlanes[i]) {
@@ -569,12 +569,13 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
                     isNovel = true;
                     numberOfNovelFacts++; //MR raus nach debug!
                 }
+            }
             else { //MR searchSettings->usePseudocountNovelty
                 ++factPlanes[i];
             }
+            //MR-pseudo
+            featureProbabilitiesNew *= factPlanes[i] / timeStep;
         }
-        //MR-pseudo
-        featureProbabilitiesNew *= factPlanes[i] / timeStep;
     }
 
 #ifdef MODE_CRAZYHOUSE
@@ -602,7 +603,8 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
                         numberOfNovelFacts++; //MR raus nach debug!
                         numberOfNovelPocketPieces++; //MR raus nach debug!
                     }
-                } else { //MR searchSettings->usePseudocountNovelty
+                }
+                else { //MR searchSettings->usePseudocountNovelty
                     ++factPlanes[idxOnFactPlane];
                 }
             }
@@ -612,13 +614,14 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     }
 #endif
 
-    if (searchSettings->useEvaluationNovelty)
+    if (searchSettings->useEvaluationNovelty) {
         if (isNovel) {
             //info_string("//MR: float searchSettings->noveltyValue = " + to_string(searchSettings->noveltyValue) + " und in double ist es: " + to_string((double) searchSettings->noveltyValue));
-            node->set_novelty_score((double) searchSettings->noveltyValue);
+            node->set_novelty_score((double)searchSettings->noveltyValue);
             //info_string("//MR: numberOfNovelFacts=" + to_string(numberOfNovelFacts));
         }
     //MR-pseudo
+    } 
     else { //MR searchSettings->usePseudocountNovelty
         const float featurePseudocount = (featureProbabilities * (1 - featureProbabilitiesNew)) / (featureProbabilitiesNew - featureProbabilities);
         node->set_novelty_score((double) searchSettings->noveltyValue / sqrt(featurePseudocount));
