@@ -217,7 +217,7 @@ void OptionsUCI::init(OptionsMap &o)
     o["Milli_Novelty_Decay"]           << Option(0, 0, 999999999);
     o["Milli_Novelty_Value"]           << Option(0, 0, 999999999);
     o["Use_Pocket_For_Novelty"]        << Option(true); //MR
-    o["Novelty_Type"]                  << Option("evaluation", { "evaluation", "raw_state_pseudocount" });
+    o["Novelty_Type"]                  << Option("evaluation", { "evaluation", "pseudo" });
 }
 
 void OptionsUCI::setoption(istringstream &is, int& variant, StateObj& state)

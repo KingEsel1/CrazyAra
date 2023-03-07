@@ -572,11 +572,14 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
             else { //MR searchSettings->usePseudocountNovelty
                 ++factPlanes[i];
+                //MR-pseudo
+                featureProbabilitiesNew *= factPlanes[i] / timeStep;
+                info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew) + "|timeStep=" + to_string(timeStep));
             }
-            //MR-pseudo
-            featureProbabilitiesNew *= factPlanes[i] / timeStep;
-            info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew));
         }
+        //MR-pseudo
+        //featureProbabilitiesNew *= factPlanes[i] / timeStep;
+        //info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew) + "|timeStep=" + to_string(timeStep));
     }
 
 #ifdef MODE_CRAZYHOUSE
@@ -607,11 +610,14 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
                 }
                 else { //MR searchSettings->usePseudocountNovelty
                     ++factPlanes[idxOnFactPlane];
+                    //MR-pseudo
+                    featureProbabilitiesNew *= factPlanes[idxOnFactPlane] / timeStep;
+                    info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew) + "|timeStep=" + to_string(timeStep));
                 }
             }
             //MR-pseudo
-            featureProbabilitiesNew *= factPlanes[idxOnFactPlane] / timeStep;
-            info_string("//MR: featureProbabilitiesNew="+to_string(featureProbabilitiesNew)+"|timeStep="+to_string(timeStep));
+            //featureProbabilitiesNew *= factPlanes[idxOnFactPlane] / timeStep;
+            //info_string("//MR: featureProbabilitiesNew="+to_string(featureProbabilitiesNew)+"|timeStep="+to_string(timeStep));
         }
     }
 #endif
@@ -625,8 +631,17 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     //MR-pseudo
     } 
     else { //MR searchSettings->usePseudocountNovelty
-        const float featurePseudocount = (featureProbabilities * (1 - featureProbabilitiesNew)) / (featureProbabilitiesNew - featureProbabilities);
+        if (featureProbabilitiesNew - featureProbabilities == 0.0f) { //MR kommt das vor? Wenn ja, wie soll ich damit umgehen?
+            info_string("//MR: featureProbabilitiesNew - featureProbabilities == 0.0f!!!");
+            featureProbabilitiesNew += 0.01;
+        }
+        float featurePseudocount = (featureProbabilities * (1 - featureProbabilitiesNew)) / (featureProbabilitiesNew - featureProbabilities);
+        if (featurePseudocount == 0.0f) { //MR kommt das vor? Wenn ja, wie soll ich damit umgehen?
+            info_string("//MR: featurePseudocount == 0.0f!!!");
+            featurePseudocount += 0.001;
+        }
         node->set_novelty_score((double) searchSettings->noveltyValue / sqrt(featurePseudocount));
+        featureProbabilities = featureProbabilitiesNew; //MR set featureProb from timeStep t to t+1
         info_string("//MR: pseudo: new novScore=" + to_string((double)searchSettings->noveltyValue / sqrt(featurePseudocount))+" | featurePseudocount="+to_string(featurePseudocount)+" | featureProbabilities"+to_string(featureProbabilities)+" | featureProbabilitiesNew"+to_string(featureProbabilitiesNew));
     }
     //info_string("//MR: --------------------------->>>>> isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " , number of novel facts = " + to_string(numberOfNovelFacts) + " , numberOfNovelPocketPieces = " + to_string(numberOfNovelPocketPieces++));
