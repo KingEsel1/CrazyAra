@@ -55,8 +55,7 @@ SearchThread::SearchThread(NeuralNetAPI* netBatch, const SearchSettings* searchS
 #endif
     reachedTablebases(false),
     factPlanes(nullptr), //MR
-    timeStep(0), //MR
-    featureProbabilities(1) //MR
+    timeStep(nullptr) //MR
 {
     searchLimits = nullptr;  // will be set by set_search_limits() every time before go()
     trajectoryBuffer.reserve(DEPTH_INIT);
@@ -96,15 +95,9 @@ void SearchThread::set_fact_planes(float* value)
 }
 
 //MR
-void SearchThread::set_time_step(int value)
+void SearchThread::set_time_step(int* value)
 {
     timeStep = value;
-}
-
-//MR
-void SearchThread::set_feature_probabilities(double value)
-{
-    featureProbabilities = value;
 }
 
 Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, ChildIdx childIdx, NodeBackup& nodeBackup)
@@ -335,13 +328,13 @@ void SearchThread::reset_stats()
 }
 
 //MR 
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total, int timeStep, double featureProbabilities) //MR-pseudo 
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB, const float* inputPlanes, float* factPlanes, int number_input_total, int* timeStep) //MR-pseudo 
 {
     //info_string("//MR: fill_nn_results(...) to newNodes");
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
-    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes, factPlanes, number_input_total, timeStep, featureProbabilities); //MR-pseudo 
+    node_assign_novelty_score(node, valueOutputs, batchIdx, searchSettings, inputPlanes, factPlanes, number_input_total, timeStep); //MR-pseudo 
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif
@@ -356,7 +349,7 @@ void SearchThread::set_nn_results_to_child_nodes()
             fill_nn_results(batchIdx, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, node,
                             tbHits, rootState->mirror_policy(newNodeSideToMove->get_element(batchIdx)),
                             searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes,
-                            net->get_nb_input_values_total(), timeStep, featureProbabilities); //MR-pseudo 
+                            net->get_nb_input_values_total(), timeStep); //MR-pseudo 
         }
         ++batchIdx;
     }
@@ -534,7 +527,7 @@ void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, si
     node->set_value(valueOutputs[batchIdx]);
 }
 
-void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes, int numberInputTotal, int timeStep, double featureProbabilities) //MR-pseudo 
+void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t batchIdx, const SearchSettings* searchSettings, const float* inputPlanes, float* factPlanes, int numberInputTotal, int* timeStep) //MR-pseudo 
 {
     //MR calculate novelty score here!
     bool isNovel = false;
@@ -546,8 +539,9 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     int index = 0;
 
     //MR-pseudo
-    timeStep+=1;
-    double featureProbabilitiesNew = 1; //MR feature probabilities at timestep t + 1
+    ++timeStep[0];
+    double featureDensity = 1; //MR feature density at timestep t
+    double featureDensityFuture = 1; //MR feature density at timestep t and the same features are observed again
 
     //MR 8 * 8 = 64 squares * 12 piecetypes
     size_t inputPlanesSizeBoard = 8 * 8 * 12;
@@ -560,7 +554,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            //info_string("//MR: board! idx="+to_string(index)+"|i="+to_string(i)+"|chanel="+to_string(chanel)+"|row="+to_string(row)+"|col="+to_string(col)+"|batchIdx="+to_string(batchIdx)+"|numbInpTotal="+to_string(numberInputTotal)+"|valueOutputs[batchIdx]="+to_string(valueOutputs[batchIdx])+"|factPlanes[i]="+to_string(factPlanes[i]));  
+            info_string("//MR: board! idx="+to_string(index)+"|i="+to_string(i)+"|chanel="+to_string(chanel)+"|row="+to_string(row)+"|col="+to_string(col)+"|batchIdx="+to_string(batchIdx)+"|numbInpTotal="+to_string(numberInputTotal)+"|valueOutputs[batchIdx]="+to_string(valueOutputs[batchIdx])+"|factPlanes[i]="+to_string(factPlanes[i]));  
 
             //MR ckeck if the value of the newly evaluated state is greater than any score of a fact that is active in that state
             if (searchSettings->useEvaluationNovelty) {
@@ -572,14 +566,12 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             }
             else { //MR searchSettings->usePseudocountNovelty
                 ++factPlanes[i];
-                //MR-pseudo
-                featureProbabilitiesNew *= factPlanes[i] / timeStep;
-                //info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew) + "|timeStep=" + to_string(timeStep));
+                //MR-pseudo+
+                featureDensity *= (factPlanes[i] + 0.5) / (timeStep[0] + 1); //MR Krichevsky-Trofimov (KT) estimator
+                featureDensityFuture *= (factPlanes[i] + 1.5) / (timeStep[0] + 2); //MR Krichevsky-Trofimov (KT) estimator when feature i is seen again in the future -> featureDensityFuture > featureDensity
+                info_string("//MR: featureDensity=" + to_string(featureDensity) + " | timeStep=" + to_string(timeStep[0]) + " | featureDensityfuture=" + to_string(featureDensityFuture));
             }
         }
-        //MR-pseudo
-        //featureProbabilitiesNew *= factPlanes[i] / timeStep;
-        //info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew) + "|timeStep=" + to_string(timeStep));
     }
 
 #ifdef MODE_CRAZYHOUSE
@@ -611,13 +603,11 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
                 else { //MR searchSettings->usePseudocountNovelty
                     ++factPlanes[idxOnFactPlane];
                     //MR-pseudo
-                    featureProbabilitiesNew *= factPlanes[idxOnFactPlane] / timeStep;
-                    //info_string("//MR: featureProbabilitiesNew=" + to_string(featureProbabilitiesNew) + "|timeStep=" + to_string(timeStep));
+                    featureDensity *= (factPlanes[idxOnFactPlane] + 0.5) / (timeStep[0] + 1); //MR Krichevsky-Trofimov (KT) estimator
+                    featureDensityFuture *= (factPlanes[idxOnFactPlane] + 1.5) / (timeStep[0] + 2); //MR Krichevsky-Trofimov (KT) estimator when feature i is seen again in the future
+                    info_string("//MR: featureDensity=" + to_string(featureDensity) + "|timeStep=" + to_string(timeStep[0]) + " | featureDensityfuture=" + to_string(featureDensityFuture));
                 }
             }
-            //MR-pseudo
-            //featureProbabilitiesNew *= factPlanes[idxOnFactPlane] / timeStep;
-            //info_string("//MR: featureProbabilitiesNew="+to_string(featureProbabilitiesNew)+"|timeStep="+to_string(timeStep));
         }
     }
 #endif
@@ -630,18 +620,17 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
         }
     } 
     else { //MR searchSettings->usePseudocountNovelty
-        if (featureProbabilitiesNew - featureProbabilities == 0.0f) { //MR kommt das vor? Wenn ja, wie soll ich damit umgehen?
-            //info_string("//MR: featureProbabilitiesNew - featureProbabilities == 0.0f!!!");
-            featureProbabilitiesNew += 0.01;
+        if (featureDensity - featureDensityFuture == 0.0f) { //MR sollte nicht vorkommen!!
+            info_string("//MR: featureProbabilitiesNew - featureProbabilities == 0.0f!!!");
+            featureDensityFuture += 0.01;
         }
-        double featurePseudocount = (featureProbabilities * (1 - featureProbabilitiesNew)) / (featureProbabilitiesNew - featureProbabilities);
-        if (featurePseudocount == 0.0f) { //MR kommt das vor? Wenn ja, wie soll ich damit umgehen?
-            //info_string("//MR: featurePseudocount == 0.0f!!!");
+        double featurePseudocount = (featureDensity * (1 - featureDensityFuture)) / (featureDensityFuture - featureDensity);
+        if (featurePseudocount == 0.0f) { //MR sollte nicht vorkommen!!
+            info_string("//MR: featurePseudocount == 0.0f!!!");
             featurePseudocount += 0.001;
         }
         node->set_novelty_score((double) searchSettings->noveltyValue / sqrt(featurePseudocount));
-        featureProbabilities = featureProbabilitiesNew; //MR set featureProb from timeStep t to t+1
-        //info_string("//MR:\n -------------------------->>>>>>> pseudo: new novScore=" + to_string((double)searchSettings->noveltyValue / sqrt(featurePseudocount))+" | featurePseudocount="+to_string(featurePseudocount)+" | featureProbabilities="+to_string(featureProbabilities)+" | featureProbabilitiesNew="+to_string(featureProbabilitiesNew));
+        info_string("//MR:\n -------------------------->>>>>>> pseudo: new novScore=" + to_string((double)searchSettings->noveltyValue / sqrt(featurePseudocount)) + " | featurePseudocount="+to_string(featurePseudocount) + " | featureDensity="+to_string(featureDensity) + " | featureDensityFuture=" + to_string(featureDensityFuture));
     }
     //info_string("//MR: --------------------------->>>>> isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " , number of novel facts = " + to_string(numberOfNovelFacts) + " , numberOfNovelPocketPieces = " + to_string(numberOfNovelPocketPieces++));
 }

@@ -84,8 +84,7 @@ public:
 
     
     float* factPlanes; //MR factPlanes stores the current score of all facts in plane representation
-    int timeStep; //MR save timestep for pseudocount novelty. It represents the call of the neural net
-    double featureProbabilities; //MR save product of all feature probabilities of timestep t
+    int* timeStep; //MR save timestep for pseudocount novelty. It represents the call of the neural net
 
 public:
     MCTSAgent(NeuralNetAPI* netSingle,

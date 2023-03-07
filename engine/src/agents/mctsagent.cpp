@@ -35,8 +35,8 @@
 #include "../util/communication.h"
 
 
-MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& netBatches,
-                     SearchSettings* searchSettings, PlaySettings* playSettings):
+MCTSAgent::MCTSAgent(NeuralNetAPI* netSingle, vector<unique_ptr<NeuralNetAPI>>& netBatches,
+    SearchSettings* searchSettings, PlaySettings* playSettings) :
     Agent(netSingle, playSettings, true),
     searchSettings(searchSettings),
     rootNode(nullptr),
@@ -71,9 +71,8 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
            factPlanes[i] = 0.0f;
         }
     }
-    //MR-pseudo variables need to be declarated, but are just used for pseudocount novelty
-    timeStep = 0; 
-    featureProbabilities = 1; 
+    //MR-pseudo variable needs to be declarated, but are just used for pseudocount novelty
+    timeStep = new int[1];
     //info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[1408] = " + to_string(factPlanes[1408]));
 }
 
@@ -201,7 +200,7 @@ void MCTSAgent::create_new_root_node(StateObj* state)
     size_t tbHits = 0;
     //info_string("//MR: mctsagent -> before fill_nn_results in create_new_root_node! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
     fill_nn_results(0, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, rootNode.get(), tbHits,
-                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total(), timeStep, featureProbabilities); //MR-pseudo 
+                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total(), timeStep); //MR-pseudo 
 #endif
     rootNode->prepare_node_for_visits();
 }
@@ -353,7 +352,6 @@ void MCTSAgent::run_mcts_search()
         searchThreads[i]->set_reached_tablebases(reachedTablebases);
         searchThreads[i]->set_fact_planes(factPlanes); //MR
         searchThreads[i]->set_time_step(timeStep); //MR
-        searchThreads[i]->set_feature_probabilities(featureProbabilities); //MR
         //info_string("//MR: run_mcts_search() loop");
         threads[i] = new thread(run_search_thread, searchThreads[i]);
     }

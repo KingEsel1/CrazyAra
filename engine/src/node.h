@@ -834,7 +834,7 @@ void backup_value(float value, float virtualLoss, const Trajectory& trajectory, 
                 //MR
                 const double transposNoveltyScore = it->node->get_novelty_score_of_action(it->childIdx);
                 noveltyScore = get_transposition_novelty_score(transposVisits, transposNoveltyScore, targetNoveltyScore);
-                info_string("//MR: backup mit Informationsdefizit! neuer noveltyScore = " + to_string(noveltyScore) + " and neuer value = " + to_string(value));
+                //info_string("//MR: backup mit Informationsdefizit! neuer noveltyScore = " + to_string(noveltyScore) + " and neuer value = " + to_string(value));
             }
         }
         i--;
