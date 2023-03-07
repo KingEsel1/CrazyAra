@@ -628,7 +628,6 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             node->set_novelty_score((double)searchSettings->noveltyValue);
             //info_string("//MR: numberOfNovelFacts=" + to_string(numberOfNovelFacts));
         }
-    //MR-pseudo
     } 
     else { //MR searchSettings->usePseudocountNovelty
         if (featureProbabilitiesNew - featureProbabilities == 0.0f) { //MR kommt das vor? Wenn ja, wie soll ich damit umgehen?
