@@ -62,19 +62,18 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     int dimFactPlanes = 1408; //MR = 8 * 8 * 12 (board pieces) + 8 * 8 * 10 (pocket pieces)
     //int dimFactPlanes = 768;
     factPlanes = new float[dimFactPlanes];
-    //MR-pseudo
-    //if (searchSettings->useEvaluationNovelty) {
-    for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
-        factPlanes[i] = -1.0f;
+    if (searchSettings->useEvaluationNovelty) {
+        for (int i = 0; i < dimFactPlanes; i++) { //MR geht das auch effizienter?
+            factPlanes[i] = -1.0f;
+        }
+    } else { //MR searchSettings->usePseudocountNovelty
+        for (int i = 0; i < dimFactPlanes; i++) {
+           factPlanes[i] = 0.0f;
+        }
     }
-    //MR-pseudo
-    // } else { //MR searchSettings->usePseudocountNovelty
-    //    for (int i = 0; i < dimFactPlanes; i++) {
-    //       factPlanes[i] = 0.0f;
-    //    }
-    //    float timeStep = 0; //MR save timestep for pseudocount novelty. It represents the call of the neural net
-    //    float featureProbabilities = 1; //MR save product of all feature probabilities of timestep t
-    // }
+    //MR-pseudo variables need to be declarated, but are just used for pseudocount novelty
+    timeStep = 0; 
+    featureProbabilities = 1; 
     //info_string("//MR: mctsagent -> after factPlanes init! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[1408] = " + to_string(factPlanes[1408]));
 }
 
@@ -201,9 +200,8 @@ void MCTSAgent::create_new_root_node(StateObj* state)
     net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
     size_t tbHits = 0;
     //info_string("//MR: mctsagent -> before fill_nn_results in create_new_root_node! With factPlanes[0] = " + to_string(factPlanes[0]) + " and factPlanes[767] = " + to_string(factPlanes[767]));
-    //MR add inputPlanes and factPlanes to params -> WOHER KENNT ER fill_nn_results? Das ist doch eine Methode von SearchThread...
     fill_nn_results(0, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, rootNode.get(), tbHits,
-                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total()); //MR, timeStep, featureProbabilities
+                    rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase(), inputPlanes, factPlanes, net->get_nb_input_values_total(), timeStep, featureProbabilities); //MR-pseudo 
 #endif
     rootNode->prepare_node_for_visits();
 }
@@ -354,6 +352,8 @@ void MCTSAgent::run_mcts_search()
         searchThreads[i]->set_search_limits(searchLimits);
         searchThreads[i]->set_reached_tablebases(reachedTablebases);
         searchThreads[i]->set_fact_planes(factPlanes); //MR
+        searchThreads[i]->set_time_step(timeStep); //MR
+        searchThreads[i]->set_feature_probabilities(featureProbabilities); //MR
         //info_string("//MR: run_mcts_search() loop");
         threads[i] = new thread(run_search_thread, searchThreads[i]);
     }

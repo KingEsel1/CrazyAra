@@ -82,8 +82,10 @@ public:
     unique_ptr<ThreadManager> threadManager;
     bool reachedTablebases;
 
-    //MR factPlanes stores the current score of all facts in plane representation
-    float* factPlanes;
+    
+    float* factPlanes; //MR factPlanes stores the current score of all facts in plane representation
+    float timeStep; //MR save timestep for pseudocount novelty. It represents the call of the neural net
+    float featureProbabilities; //MR save product of all feature probabilities of timestep t
 
 public:
     MCTSAgent(NeuralNetAPI* netSingle,
