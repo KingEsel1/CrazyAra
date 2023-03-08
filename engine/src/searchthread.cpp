@@ -554,7 +554,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
             chanel = i / 64;
             col = (i % 64) % 8;
             row = (i % 64) / 8;
-            info_string("//MR: board! idx="+to_string(index)+"|i="+to_string(i)+"|chanel="+to_string(chanel)+"|row="+to_string(row)+"|col="+to_string(col)+"|batchIdx="+to_string(batchIdx)+"|numbInpTotal="+to_string(numberInputTotal)+"|valueOutputs[batchIdx]="+to_string(valueOutputs[batchIdx])+"|factPlanes[i]="+to_string(factPlanes[i]));  
+            //info_string("//MR: board! idx="+to_string(index)+"|i="+to_string(i)+"|chanel="+to_string(chanel)+"|row="+to_string(row)+"|col="+to_string(col)+"|batchIdx="+to_string(batchIdx)+"|numbInpTotal="+to_string(numberInputTotal)+"|valueOutputs[batchIdx]="+to_string(valueOutputs[batchIdx])+"|factPlanes[i]="+to_string(factPlanes[i]));  
 
             //MR ckeck if the value of the newly evaluated state is greater than any score of a fact that is active in that state
             if (searchSettings->useEvaluationNovelty) {
@@ -569,7 +569,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
                 //MR-pseudo+
                 featureDensity *= (factPlanes[i] + 0.5) / (timeStep[0] + 1); //MR Krichevsky-Trofimov (KT) estimator
                 featureDensityFuture *= (factPlanes[i] + 1.5) / (timeStep[0] + 2); //MR Krichevsky-Trofimov (KT) estimator when feature i is seen again in the future -> featureDensityFuture > featureDensity
-                info_string("//MR: featureDensity=" + to_string(featureDensity) + " | timeStep=" + to_string(timeStep[0]) + " | featureDensityfuture=" + to_string(featureDensityFuture));
+                //info_string("//MR: featureDensity=" + to_string(featureDensity) + " | timeStep=" + to_string(timeStep[0]) + " | featureDensityfuture=" + to_string(featureDensityFuture));
             }
         }
     }
@@ -605,7 +605,7 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
                     //MR-pseudo
                     featureDensity *= (factPlanes[idxOnFactPlane] + 0.5) / (timeStep[0] + 1); //MR Krichevsky-Trofimov (KT) estimator
                     featureDensityFuture *= (factPlanes[idxOnFactPlane] + 1.5) / (timeStep[0] + 2); //MR Krichevsky-Trofimov (KT) estimator when feature i is seen again in the future
-                    info_string("//MR: featureDensity=" + to_string(featureDensity) + "|timeStep=" + to_string(timeStep[0]) + " | featureDensityfuture=" + to_string(featureDensityFuture));
+                    //info_string("//MR: featureDensity=" + to_string(featureDensity) + "|timeStep=" + to_string(timeStep[0]) + " | featureDensityfuture=" + to_string(featureDensityFuture));
                 }
             }
         }
@@ -621,16 +621,16 @@ void node_assign_novelty_score(Node* node, const float* valueOutputs, size_t bat
     } 
     else { //MR searchSettings->usePseudocountNovelty
         if (featureDensity - featureDensityFuture == 0.0f) { //MR sollte nicht vorkommen!!
-            info_string("//MR: featureProbabilitiesNew - featureProbabilities == 0.0f!!!");
+            //info_string("//MR: featureProbabilitiesNew - featureProbabilities == 0.0f!!!");
             featureDensityFuture += 0.01;
         }
         double featurePseudocount = (featureDensity * (1 - featureDensityFuture)) / (featureDensityFuture - featureDensity);
         if (featurePseudocount == 0.0f) { //MR sollte nicht vorkommen!!
-            info_string("//MR: featurePseudocount == 0.0f!!!");
+            //info_string("//MR: featurePseudocount == 0.0f!!!");
             featurePseudocount += 0.001;
         }
         node->set_novelty_score((double) searchSettings->noveltyValue / sqrt(featurePseudocount));
-        info_string("//MR:\n -------------------------->>>>>>> pseudo: new novScore=" + to_string((double)searchSettings->noveltyValue / sqrt(featurePseudocount)) + " | featurePseudocount="+to_string(featurePseudocount) + " | featureDensity="+to_string(featureDensity) + " | featureDensityFuture=" + to_string(featureDensityFuture));
+        //info_string("//MR:\n -------------------------->>>>>>> pseudo: new novScore=" + to_string((double)searchSettings->noveltyValue / sqrt(featurePseudocount)) + " | featurePseudocount="+to_string(featurePseudocount) + " | featureDensity="+to_string(featureDensity) + " | featureDensityFuture=" + to_string(featureDensityFuture));
     }
     //info_string("//MR: --------------------------->>>>> isNovel = " + to_string(isNovel) + " , noveltyScore = " + to_string(node->get_novelty_score()) + " , number of novel facts = " + to_string(numberOfNovelFacts) + " , numberOfNovelPocketPieces = " + to_string(numberOfNovelPocketPieces++));
 }
