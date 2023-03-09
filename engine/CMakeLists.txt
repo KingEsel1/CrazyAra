@@ -12,8 +12,8 @@ option(BACKEND_OPENVINO          "Build with OpenVino backend (CPU/GPU) support"
 option(BUILD_TESTS               "Build and run tests"  OFF)
 option(USE_DYNAMIC_NN_ARCH       "Build with dynamic neural network architektur support"  ON)
 # enable a single mode for different model input / outputs
-option(MODE_CRAZYHOUSE           "Build with crazyhouse only support"  ON) #//MR was ON
-option(MODE_CHESS                "Build with chess + chess960 only support"  OFF) #//MR was OFF
+option(MODE_CRAZYHOUSE           "Build with crazyhouse only support"  OFF) #//MR was ON
+option(MODE_CHESS                "Build with chess + chess960 only support"  ON) #//MR was OFF
 option(MODE_LICHESS              "Build with lichess variants support"  OFF)
 option(MODE_OPEN_SPIEL           "Build with open_spiel environment support"  OFF)
 option(MODE_BOARDGAMES           "Build with Fairy-Stockfish environment support for board games"   OFF)
